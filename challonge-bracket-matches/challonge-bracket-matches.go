@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
@@ -40,9 +41,9 @@ func New(baseURL, apiKey string, client *http.Client, contextTimeout time.Durati
 
 // Return map of type int -> string where int is the tournamentId and string is the game name
 func (c *customClient) FetchTournaments(ctx context.Context, date string) (map[int]string, error) {
-	params := map[string][]string{
-		"state":         {"in_progress"},
-		"created_after": {date},
+	params := map[string]string{
+		"state":         "in_progress",
+		"created_after": date,
 	}
 
 	ctx, cancelCtx := context.WithTimeout(ctx, c.contextTimeout)
@@ -65,12 +66,19 @@ func (c *customClient) FetchTournaments(ctx context.Context, date string) (map[i
 	}
 
 	defer res.Body.Close()
-	fmt.Println(res.Body)
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	fmt.Println(string(body))
 
 	return nil, nil
 }
 
 func (c *customClient) get(req *http.Request, params map[string]string) (resp *http.Response, err error) {
+	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/vnd.api+json")
 	req.Header.Add("Authorization-Type", "v1")
 	req.Header.Add("Authorization", c.apiKey)
