@@ -62,6 +62,7 @@ func (c *customClient) FetchTournaments(ctx context.Context, date string) (map[s
 
 		res, err := c.get(ctx, http.MethodGet, c.baseURL+"/tournaments.json", nil, params)
 		if err != nil {
+			// TODO: properly handle error then return
 			fmt.Println(err)
 			return nil, err
 		}
