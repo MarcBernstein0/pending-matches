@@ -58,6 +58,22 @@ func TestFetchTournaments(t *testing.T) {
 		wantErr       error
 	}{
 		{
+			testName:      "response not ok, auth error",
+			mockDate:      time.Now().Local().Format("2006-01-02"),
+			mockFetchData: New(server.URL, "bad api key", http.DefaultClient, 5*time.Second),
+			wantData:      nil,
+			wantErr:       fmt.Errorf("%w. %s", ErrResponseNotOK, http.StatusText(http.StatusUnauthorized)),
+		},
+		{
+			testName:      "response ok one tournament no pagination",
+			mockDate:      time.Now().Local().Format("2006-01-02"),
+			mockFetchData: New(server.URL, "mock api key", http.DefaultClient, 5*time.Second),
+			wantData: map[string]string{
+				"1": "test",
+				"2": "test2",
+			},
+			wantErr: nil,
+		}, {
 			testName:      "response ok one tournament no pagination",
 			mockDate:      time.Now().Local().Format("2006-01-02"),
 			mockFetchData: New(server.URL, "mock api key", http.DefaultClient, 5*time.Second),
