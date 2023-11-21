@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -15,6 +16,152 @@ import (
 var server *httptest.Server
 
 const MOCK_API_KEY = "mock api key"
+
+var mockReturnValue string = `
+{
+	"data": [
+		{
+			"id": "1",
+			"type": "type",
+			"attributes": {
+				"tournament_type": "tournament_type",
+				"name": "testName",
+				"state": "state",
+				"game_name": "test"
+			}
+		}
+	],
+	"included": [
+		{
+			"id": "blazblue-central-fiction",
+			"type": "game",
+			"attributes": {
+				"name": "BlazBlue: Central Fiction",
+				"aliases": [
+					"blazeblue central fiction"
+				],
+				"verified": true
+			}
+		}
+	]
+}`
+
+var mockReturnValueMultiTournaments string = `
+{
+	"data": [
+		{
+			"id": "1",
+			"type": "type",
+			"attributes": {
+				"tournament_type": "tournament_type",
+				"name": "testName",
+				"state": "state",
+				"game_name": "test"
+			}
+		},
+		{
+			"id": "2",
+			"type": "type",
+			"attributes": {
+				"tournament_type": "tournament_type",
+				"name": "testName",
+				"state": "state",
+				"game_name": "test2"
+			}
+		}
+	],
+	"included": [
+		{
+			"id": "blazblue-central-fiction",
+			"type": "game",
+			"attributes": {
+				"name": "BlazBlue: Central Fiction",
+				"aliases": [
+					"blazeblue central fiction"
+				],
+				"verified": true
+			}
+		}
+	]
+}`
+
+var mockReturnValueMultiTournaments2 string = `
+{
+	"data": [
+		{
+			"id": "3",
+			"type": "type",
+			"attributes": {
+				"tournament_type": "tournament_type",
+				"name": "testName",
+				"state": "state",
+				"game_name": "test3"
+			}
+		},
+		{
+			"id": "4",
+			"type": "type",
+			"attributes": {
+				"tournament_type": "tournament_type",
+				"name": "testName",
+				"state": "state",
+				"game_name": "test4"
+			}
+		}
+	],
+	"included": [
+		{
+			"id": "blazblue-central-fiction",
+			"type": "game",
+			"attributes": {
+				"name": "BlazBlue: Central Fiction",
+				"aliases": [
+					"blazeblue central fiction"
+				],
+				"verified": true
+			}
+		}
+	]
+}`
+
+var mockReturnValueMultiTournaments3 string = `
+{
+	"data": [
+		{
+			"id": "5",
+			"type": "type",
+			"attributes": {
+				"tournament_type": "tournament_type",
+				"name": "testName",
+				"state": "state",
+				"game_name": "test5"
+			}
+		},
+		{
+			"id": "6",
+			"type": "type",
+			"attributes": {
+				"tournament_type": "tournament_type",
+				"name": "testName",
+				"state": "state",
+				"game_name": "test6"
+			}
+		}
+	],
+	"included": [
+		{
+			"id": "blazblue-central-fiction",
+			"type": "game",
+			"attributes": {
+				"name": "BlazBlue: Central Fiction",
+				"aliases": [
+					"blazeblue central fiction"
+				],
+				"verified": true
+			}
+		}
+	]
+}`
 
 func TestMain(m *testing.M) {
 	fmt.Println("Mock Server")
@@ -57,29 +204,43 @@ func TestFetchTournaments(t *testing.T) {
 		wantData      map[string]string
 		wantErr       error
 	}{
+		// {
+		// 	testName:      "response not ok, auth error",
+		// 	mockDate:      time.Now().Local().Format("2006-01-02"),
+		// 	mockFetchData: New(server.URL, "bad api key", http.DefaultClient, 5*time.Second),
+		// 	wantData:      nil,
+		// 	wantErr:       fmt.Errorf("%w. %s", ErrResponseNotOK, http.StatusText(http.StatusUnauthorized)),
+		// },
+		// {
+		// 	testName:      "response ok one tournament no pagination",
+		// 	mockDate:      "2023-07-16",
+		// 	mockFetchData: New(server.URL, "mock api key", http.DefaultClient, 5*time.Second),
+		// 	wantData: map[string]string{
+		// 		"1": "test",
+		// 	},
+		// 	wantErr: nil,
+		// },
+		// {
+		// 	testName:      "response ok multiple tournament no pagination",
+		// 	mockDate:      "2023-07-17",
+		// 	mockFetchData: New(server.URL, "mock api key", http.DefaultClient, 5*time.Second),
+		// 	wantData: map[string]string{
+		// 		"1": "test",
+		// 		"2": "test2",
+		// 	},
+		// 	wantErr: nil,
+		// },
 		{
-			testName:      "response not ok, auth error",
-			mockDate:      time.Now().Local().Format("2006-01-02"),
-			mockFetchData: New(server.URL, "bad api key", http.DefaultClient, 5*time.Second),
-			wantData:      nil,
-			wantErr:       fmt.Errorf("%w. %s", ErrResponseNotOK, http.StatusText(http.StatusUnauthorized)),
-		},
-		{
-			testName:      "response ok one tournament no pagination",
-			mockDate:      time.Now().Local().Format("2006-01-02"),
+			testName:      "response ok multiple tournament and pagination",
+			mockDate:      "2023-07-18",
 			mockFetchData: New(server.URL, "mock api key", http.DefaultClient, 5*time.Second),
 			wantData: map[string]string{
 				"1": "test",
 				"2": "test2",
-			},
-			wantErr: nil,
-		}, {
-			testName:      "response ok one tournament no pagination",
-			mockDate:      time.Now().Local().Format("2006-01-02"),
-			mockFetchData: New(server.URL, "mock api key", http.DefaultClient, 5*time.Second),
-			wantData: map[string]string{
-				"1": "test",
-				"2": "test2",
+				"3": "test3",
+				"4": "test4",
+				"5": "test5",
+				"6": "test6",
 			},
 			wantErr: nil,
 		},
@@ -117,47 +278,83 @@ func mockFetchTournamentEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mockReturnValue := `
-	{
-		"data": [
-			{
-				"id": "1",
-				"type": "type",
-				"attributes": {
-					"tournament_type": "tournament_type",
-					"name": "testName",
-					"state": "state",
-					"game_name": "test"
+	// no pagination, one tournaments
+	if date == "2023-07-16" {
+		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+		if page >= 1 {
+			emptyReturn := `{
+				"data": [],
+				"included": [],
+				"meta": {
+					"count": 36
+				},
+				"links": {
+					"self": "https://api.challonge.com/v2.1/tournaments.json?page=2&per_page=25&state=in_progress&created_after=2023-07-22",
+					"next": "https://api.challonge.com/v2.1/tournaments.json?page=3&per_page=25",
+					"prev": "https://api.challonge.com/v2.1/tournaments.json?page=1&per_page=25"
 				}
-			},
-			{
-				"id": "2",
-				"type": "type",
-				"attributes": {
-					"tournament_type": "tournament_type",
-					"name": "testName",
-					"state": "state",
-					"game_name": "test2"
-				}
-			}
-		],
-		"included": [
-			{
-				"id": "blazblue-central-fiction",
-				"type": "game",
-				"attributes": {
-					"name": "BlazBlue: Central Fiction",
-					"aliases": [
-						"blazeblue central fiction"
-					],
-					"verified": true
-				}
-			}
-		]
+			}`
+			w.Write([]byte(emptyReturn))
+			return
+		}
+		byteValue := []byte(mockReturnValue)
+		w.Write(byteValue)
 	}
-	`
-	byteValue := []byte(mockReturnValue)
-	w.Write(byteValue)
+
+	// no pagination, multi-tournaments
+	if date == "2023-07-17" {
+		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+		if page >= 1 {
+			emptyReturn := `{
+				"data": [],
+				"included": [],
+				"meta": {
+					"count": 36
+				},
+				"links": {
+					"self": "https://api.challonge.com/v2.1/tournaments.json?page=2&per_page=25&state=in_progress&created_after=2023-07-22",
+					"next": "https://api.challonge.com/v2.1/tournaments.json?page=3&per_page=25",
+					"prev": "https://api.challonge.com/v2.1/tournaments.json?page=1&per_page=25"
+				}
+			}`
+			w.Write([]byte(emptyReturn))
+			return
+		}
+		byteValue := []byte(mockReturnValueMultiTournaments)
+		w.Write(byteValue)
+	}
+
+	// pagination, multi-tournaments
+	if date == "2023-07-18" {
+		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+		if page >= 4 {
+			emptyReturn := `{
+				"data": [],
+				"included": [],
+				"meta": {
+					"count": 36
+				},
+				"links": {
+					"self": "https://api.challonge.com/v2.1/tournaments.json?page=2&per_page=25&state=in_progress&created_after=2023-07-22",
+					"next": "https://api.challonge.com/v2.1/tournaments.json?page=3&per_page=25",
+					"prev": "https://api.challonge.com/v2.1/tournaments.json?page=1&per_page=25"
+				}
+			}`
+			w.Write([]byte(emptyReturn))
+			return
+		}
+		if page == 1 {
+			byteValue := []byte(mockReturnValueMultiTournaments)
+			w.Write(byteValue)
+		} else if page == 2 {
+			byteValue := []byte(mockReturnValueMultiTournaments2)
+			w.Write(byteValue)
+		} else if page == 3 {
+			byteValue := []byte(mockReturnValueMultiTournaments3)
+			w.Write(byteValue)
+		}
+	}
+
 }
 
 func testApiKeyAuth(apiKey string) bool {

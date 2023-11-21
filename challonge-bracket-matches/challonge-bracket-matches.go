@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/MarcBernstein0/pending-matches/models"
@@ -46,44 +47,59 @@ func (c *customClient) FetchTournaments(ctx context.Context, date string) (map[s
 
 	resMap := make(map[string]string)
 
-	params := map[string]string{
-		"state":         "in_progress",
-		"created_after": date,
-	}
+	// dealing with paginated response
+	paginationLeft := true
+	pageNumber := 1
 
-	ctx, cancelCtx := context.WithTimeout(ctx, c.contextTimeout)
-	defer cancelCtx()
+	for paginationLeft {
+		params := map[string]string{
+			"state":         "in_progress",
+			"created_after": date,
+			"page":          strconv.Itoa(pageNumber),
+			"per_page":      "25",
+		}
 
-	requestURL := c.baseURL + "/tournaments.json"
-	fmt.Println(requestURL)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
-	if err != nil {
-		return nil, err
-	}
+		ctx, cancelCtx := context.WithTimeout(ctx, c.contextTimeout)
+		defer cancelCtx()
 
-	res, err := c.get(req, params)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
+		requestURL := c.baseURL + "/tournaments.json"
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
+		if err != nil {
+			return nil, err
+		}
 
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("%w. %s", ErrResponseNotOK, http.StatusText(res.StatusCode))
-	}
-	fmt.Println(res)
+		res, err := c.get(req, params)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
 
-	defer res.Body.Close()
+		if res.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("%w. %s", ErrResponseNotOK, http.StatusText(res.StatusCode))
+		}
+		// fmt.Println(res)
 
-	var tournaments models.Tournaments
-	err = json.NewDecoder(res.Body).Decode(&tournaments)
-	if err != nil {
-		fmt.Println(err)
-		return nil, fmt.Errorf("%w. %s", err, http.StatusText(http.StatusInternalServerError))
+		defer res.Body.Close()
+
+		var tournaments models.Tournaments
+		err = json.NewDecoder(res.Body).Decode(&tournaments)
+		if err != nil {
+			fmt.Println(err)
+			return nil, fmt.Errorf("%w. %s", err, http.StatusText(http.StatusInternalServerError))
+		}
+		// fmt.Printf("%+v\n", tournaments)
+
+		if len(tournaments.Data) == 0 {
+			paginationLeft = false
+		} else {
+			for _, tournament := range tournaments.Data {
+				resMap[tournament.Id] = tournament.Attributes.GameName
+			}
+
+			pageNumber++
+		}
 	}
-	fmt.Printf("tournaments value %+v\n", tournaments)
-	for _, tournament := range tournaments.Data {
-		resMap[tournament.Id] = tournament.Attributes.GameName
-	}
+	fmt.Printf("%+v\n", resMap)
 
 	return resMap, nil
 }
@@ -100,5 +116,6 @@ func (c *customClient) get(req *http.Request, params map[string]string) (resp *h
 	}
 	req.URL.RawQuery = q.Encode()
 
+	// fmt.Println(req.URL)
 	return c.client.Do(req)
 }
