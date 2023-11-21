@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -59,16 +60,7 @@ func (c *customClient) FetchTournaments(ctx context.Context, date string) (map[s
 			"per_page":      "25",
 		}
 
-		ctx, cancelCtx := context.WithTimeout(ctx, c.contextTimeout)
-		defer cancelCtx()
-
-		requestURL := c.baseURL + "/tournaments.json"
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
-		if err != nil {
-			return nil, err
-		}
-
-		res, err := c.get(req, params)
+		res, err := c.get(ctx, http.MethodGet, c.baseURL+"/tournaments.json", nil, params)
 		if err != nil {
 			fmt.Println(err)
 			return nil, err
@@ -77,7 +69,6 @@ func (c *customClient) FetchTournaments(ctx context.Context, date string) (map[s
 		if res.StatusCode != http.StatusOK {
 			return nil, fmt.Errorf("%w. %s", ErrResponseNotOK, http.StatusText(res.StatusCode))
 		}
-		// fmt.Println(res)
 
 		defer res.Body.Close()
 
@@ -87,7 +78,6 @@ func (c *customClient) FetchTournaments(ctx context.Context, date string) (map[s
 			fmt.Println(err)
 			return nil, fmt.Errorf("%w. %s", err, http.StatusText(http.StatusInternalServerError))
 		}
-		// fmt.Printf("%+v\n", tournaments)
 
 		if len(tournaments.Data) == 0 {
 			paginationLeft = false
@@ -99,12 +89,20 @@ func (c *customClient) FetchTournaments(ctx context.Context, date string) (map[s
 			pageNumber++
 		}
 	}
-	fmt.Printf("%+v\n", resMap)
 
 	return resMap, nil
 }
 
-func (c *customClient) get(req *http.Request, params map[string]string) (resp *http.Response, err error) {
+func (c *customClient) get(ctx context.Context, method, urlPath string, reqBody io.Reader, params map[string]string) (resp *http.Response, err error) {
+	ctx, cancel := context.WithTimeout(ctx, c.contextTimeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, method, urlPath, reqBody)
+	if err != nil {
+		// gracefully handle error and pass along
+		return nil, err
+	}
+
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/vnd.api+json")
 	req.Header.Add("Authorization-Type", "v1")
@@ -116,6 +114,5 @@ func (c *customClient) get(req *http.Request, params map[string]string) (resp *h
 	}
 	req.URL.RawQuery = q.Encode()
 
-	// fmt.Println(req.URL)
 	return c.client.Do(req)
 }

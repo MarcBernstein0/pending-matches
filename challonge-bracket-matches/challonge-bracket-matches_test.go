@@ -204,32 +204,32 @@ func TestFetchTournaments(t *testing.T) {
 		wantData      map[string]string
 		wantErr       error
 	}{
-		// {
-		// 	testName:      "response not ok, auth error",
-		// 	mockDate:      time.Now().Local().Format("2006-01-02"),
-		// 	mockFetchData: New(server.URL, "bad api key", http.DefaultClient, 5*time.Second),
-		// 	wantData:      nil,
-		// 	wantErr:       fmt.Errorf("%w. %s", ErrResponseNotOK, http.StatusText(http.StatusUnauthorized)),
-		// },
-		// {
-		// 	testName:      "response ok one tournament no pagination",
-		// 	mockDate:      "2023-07-16",
-		// 	mockFetchData: New(server.URL, "mock api key", http.DefaultClient, 5*time.Second),
-		// 	wantData: map[string]string{
-		// 		"1": "test",
-		// 	},
-		// 	wantErr: nil,
-		// },
-		// {
-		// 	testName:      "response ok multiple tournament no pagination",
-		// 	mockDate:      "2023-07-17",
-		// 	mockFetchData: New(server.URL, "mock api key", http.DefaultClient, 5*time.Second),
-		// 	wantData: map[string]string{
-		// 		"1": "test",
-		// 		"2": "test2",
-		// 	},
-		// 	wantErr: nil,
-		// },
+		{
+			testName:      "response not ok, auth error",
+			mockDate:      time.Now().Local().Format("2006-01-02"),
+			mockFetchData: New(server.URL, "bad api key", http.DefaultClient, 5*time.Second),
+			wantData:      nil,
+			wantErr:       fmt.Errorf("%w. %s", ErrResponseNotOK, http.StatusText(http.StatusUnauthorized)),
+		},
+		{
+			testName:      "response ok one tournament no pagination",
+			mockDate:      "2023-07-16",
+			mockFetchData: New(server.URL, "mock api key", http.DefaultClient, 5*time.Second),
+			wantData: map[string]string{
+				"1": "test",
+			},
+			wantErr: nil,
+		},
+		{
+			testName:      "response ok multiple tournament no pagination",
+			mockDate:      "2023-07-17",
+			mockFetchData: New(server.URL, "mock api key", http.DefaultClient, 5*time.Second),
+			wantData: map[string]string{
+				"1": "test",
+				"2": "test2",
+			},
+			wantErr: nil,
+		},
 		{
 			testName:      "response ok multiple tournament and pagination",
 			mockDate:      "2023-07-18",
@@ -281,7 +281,7 @@ func mockFetchTournamentEndpoint(w http.ResponseWriter, r *http.Request) {
 	// no pagination, one tournaments
 	if date == "2023-07-16" {
 		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-		if page >= 1 {
+		if page > 1 {
 			emptyReturn := `{
 				"data": [],
 				"included": [],
@@ -304,7 +304,7 @@ func mockFetchTournamentEndpoint(w http.ResponseWriter, r *http.Request) {
 	// no pagination, multi-tournaments
 	if date == "2023-07-17" {
 		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-		if page >= 1 {
+		if page > 1 {
 			emptyReturn := `{
 				"data": [],
 				"included": [],
