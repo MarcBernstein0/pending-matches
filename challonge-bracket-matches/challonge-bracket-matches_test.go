@@ -268,9 +268,12 @@ func TestFetchParticipants(t *testing.T) {
 	tt := []struct {
 		testName      string
 		mockFetchData FetchData
-		inputData     map[string]string
-		wantData      []models.TournamentParticipants
-		wantErr       error
+		inputData     struct {
+			tournamentId   string
+			tournamentGame string
+		}
+		wantData []models.TournamentParticipants
+		wantErr  error
 	}{
 		// {
 		// 	testName:      "response not ok",
@@ -283,13 +286,17 @@ func TestFetchParticipants(t *testing.T) {
 		{
 			testName:      "data found no pagination",
 			mockFetchData: New(server.URL, "mock api key", http.DefaultClient, 5*time.Second),
-			inputData: map[string]string{
-				"10879090": "test",
+			inputData: struct {
+				tournamentId   string
+				tournamentGame string
+			}{
+				tournamentId:   "1",
+				tournamentGame: "test",
 			},
 			wantData: []models.TournamentParticipants{
 				{
 					GameName:     "test",
-					TournamentID: 10879090,
+					TournamentID: 1,
 					Participant: map[int]string{
 						166014671: "test",
 						166014672: "test2",
@@ -306,7 +313,7 @@ func TestFetchParticipants(t *testing.T) {
 		t.Run(tc.testName, func(t *testing.T) {
 			// t.Parallel()
 
-			gotData, gotErr := tc.mockFetchData.FetchParticipants(context.Background(), tc.inputData)
+			gotData, gotErr := tc.mockFetchData.FetchParticipants(context.Background(), tc.inputData.tournamentId, tc.inputData.tournamentGame)
 			assert.ElementsMatch(t, tc.wantData, gotData)
 			if tc.wantErr != nil {
 				assert.EqualError(t, gotErr, tc.wantErr.Error())

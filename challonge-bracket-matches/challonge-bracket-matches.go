@@ -33,7 +33,7 @@ type (
 		FetchTournaments(ctx context.Context, date string) (map[string]string, error)
 		// FetchParticipants fetch all participants for a list of tournaments
 		// GET https://api.challonge.com/v2.1/tournaments/{tournaments}/participants.json?page={}&per_page=25
-		FetchParticipants(ctx context.Context, tournaments map[string]string) ([]models.TournamentParticipants, error)
+		FetchParticipants(ctx context.Context, tournamentId, tournamentGame string) (models.TournamentParticipants, error)
 	}
 )
 
@@ -97,8 +97,52 @@ func (c *customClient) FetchTournaments(ctx context.Context, date string) (map[s
 	return resMap, nil
 }
 
-func (c *customClient) FetchParticipants(ctx context.Context, tournaments map[string]string) ([]models.TournamentParticipants, error) {
-	var participants []models.TournamentParticipants
+func (c *customClient) FetchParticipants(ctx context.Context, tournamentId, tournamentGame string) (models.TournamentParticipants, error) {
+	participants := models.TournamentParticipants{
+		GameName:     tournamentGame,
+		TournamentID: tournamentId,
+		Participant:  map[string]string{},
+	}
+
+	// dealing with paginated responses
+	paginationLeft := true
+	pageNumber := 1
+
+	for paginationLeft {
+		params := map[string]string{
+			"page":     strconv.Itoa(pageNumber),
+			"per_page": "25",
+		}
+
+		res, err := c.get(ctx, http.MethodGet, c.baseURL+"/tournaments/"+tournamentId+"/participants.json", nil, params)
+		if err != nil {
+			// TODO: properly handle error then return
+			fmt.Println(err)
+			return models.TournamentParticipants{}, err
+		}
+
+		if res.StatusCode != http.StatusOK {
+			return models.TournamentParticipants{}, fmt.Errorf("%w. %s", ErrResponseNotOK, http.StatusText(res.StatusCode))
+		}
+
+		defer res.Body.Close()
+
+		var participantsChall models.Participants
+		err = json.NewDecoder(res.Body).Decode(&participantsChall)
+		if err != nil {
+			fmt.Println(err)
+			return models.TournamentParticipants{}, fmt.Errorf("%w. %s", err, http.StatusText(http.StatusInternalServerError))
+		}
+
+		if len(participantsChall.Data) == 0 {
+			paginationLeft = false
+		} else {
+			for _, participant := range participantsChall.Data {
+				participants.Participant[participant.Id] = participant.Attributes.Name
+			}
+			pageNumber++
+		}
+	}
 
 	return participants, nil
 }
