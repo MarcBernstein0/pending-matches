@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MarcBernstein0/pending-matches/models"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -257,6 +259,59 @@ func TestFetchTournaments(t *testing.T) {
 				require.EqualError(t, gotErr, tc.wantErr.Error())
 			} else {
 				require.NoError(t, gotErr)
+			}
+		})
+	}
+}
+
+func TestFetchParticipants(t *testing.T) {
+	tt := []struct {
+		testName      string
+		mockFetchData FetchData
+		inputData     map[string]string
+		wantData      []models.TournamentParticipants
+		wantErr       error
+	}{
+		// {
+		// 	testName:      "response not ok",
+		// 	mockDate:      time.Now().Local().Format("2006-01-02"),
+		// 	mockFetchData: New(server.URL, "bad api key", http.DefaultClient, 5*time.Second),
+		// 	inputData:     nil,
+		// 	wantData:      nil,
+		// 	wantErr:       fmt.Errorf("%w. %s", ErrResponseNotOK, http.StatusText(http.StatusUnauthorized)),
+		// },
+		{
+			testName:      "data found no pagination",
+			mockFetchData: New(server.URL, "mock api key", http.DefaultClient, 5*time.Second),
+			inputData: map[string]string{
+				"10879090": "test",
+			},
+			wantData: []models.TournamentParticipants{
+				{
+					GameName:     "test",
+					TournamentID: 10879090,
+					Participant: map[int]string{
+						166014671: "test",
+						166014672: "test2",
+						166014673: "test3",
+						166014674: "test4",
+					},
+				},
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			// t.Parallel()
+
+			gotData, gotErr := tc.mockFetchData.FetchParticipants(context.Background(), tc.inputData)
+			assert.ElementsMatch(t, tc.wantData, gotData)
+			if tc.wantErr != nil {
+				assert.EqualError(t, gotErr, tc.wantErr.Error())
+			} else {
+				assert.NoError(t, gotErr)
 			}
 		})
 	}

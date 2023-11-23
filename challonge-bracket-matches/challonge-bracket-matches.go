@@ -29,8 +29,11 @@ type (
 
 	FetchData interface {
 		// FetchTournaments fetch all tournaments created after a specific date
-		// GET https://api.challonge.com/v2.1/tournaments.json?page=1&per_page=25
+		// GET https://api.challonge.com/v2.1/tournaments.json?page={}&per_page=25
 		FetchTournaments(ctx context.Context, date string) (map[string]string, error)
+		// FetchParticipants fetch all participants for a list of tournaments
+		// GET https://api.challonge.com/v2.1/tournaments/{tournaments}/participants.json?page={}&per_page=25
+		FetchParticipants(ctx context.Context, tournaments map[string]string) ([]models.TournamentParticipants, error)
 	}
 )
 
@@ -92,6 +95,12 @@ func (c *customClient) FetchTournaments(ctx context.Context, date string) (map[s
 	}
 
 	return resMap, nil
+}
+
+func (c *customClient) FetchParticipants(ctx context.Context, tournaments map[string]string) ([]models.TournamentParticipants, error) {
+	var participants []models.TournamentParticipants
+
+	return participants, nil
 }
 
 func (c *customClient) get(ctx context.Context, method, urlPath string, reqBody io.Reader, params map[string]string) (resp *http.Response, err error) {
