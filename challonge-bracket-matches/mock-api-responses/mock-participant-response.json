@@ -1,0 +1,117 @@
+{
+    "data": [
+        {
+            "id": "1",
+            "type": "participant",
+            "attributes": {
+                "icon": null,
+                "seed": 1,
+                "misc": null,
+                "username": null,
+                "final_rank": null,
+                "group_id": null,
+                "tournament_id": 2134,
+                "name": "testName1",
+                "timestamps": {
+                    "created_at": "2023-07-22T19:52:26.419Z",
+                    "updated_at": "2023-07-22T19:52:26.419Z"
+                },
+                "states": {
+                    "active": true
+                }
+            },
+            "relationships": {
+                "invitation": {
+                    "data": null
+                }
+            }
+        },
+        {
+            "id": "2",
+            "type": "participant",
+            "attributes": {
+                "icon": null,
+                "seed": 2,
+                "misc": null,
+                "username": null,
+                "final_rank": null,
+                "group_id": null,
+                "tournament_id": 2134,
+                "name": "testName2",
+                "timestamps": {
+                    "created_at": "2023-07-22T19:52:26.442Z",
+                    "updated_at": "2023-07-22T19:52:26.442Z"
+                },
+                "states": {
+                    "active": true
+                }
+            },
+            "relationships": {
+                "invitation": {
+                    "data": null
+                }
+            }
+        },
+        {
+            "id": "3",
+            "type": "participant",
+            "attributes": {
+                "icon": null,
+                "seed": 3,
+                "misc": null,
+                "username": null,
+                "final_rank": null,
+                "group_id": null,
+                "tournament_id": 2134,
+                "name": "testName3",
+                "timestamps": {
+                    "created_at": "2023-07-22T19:52:26.464Z",
+                    "updated_at": "2023-07-22T19:52:26.464Z"
+                },
+                "states": {
+                    "active": true
+                }
+            },
+            "relationships": {
+                "invitation": {
+                    "data": null
+                }
+            }
+        },
+        {
+            "id": "4",
+            "type": "participant",
+            "attributes": {
+                "icon": null,
+                "seed": 4,
+                "misc": null,
+                "username": null,
+                "final_rank": null,
+                "group_id": null,
+                "tournament_id": 2134,
+                "name": "testName4",
+                "timestamps": {
+                    "created_at": "2023-07-22T19:52:26.486Z",
+                    "updated_at": "2023-07-22T19:52:26.486Z"
+                },
+                "states": {
+                    "active": true
+                }
+            },
+            "relationships": {
+                "invitation": {
+                    "data": null
+                }
+            }
+        }
+    ],
+    "included": [],
+    "meta": {
+        "count": 53
+    },
+    "links": {
+        "self": "https://api.challonge.com/v2.1/tournaments/2134/participants.json?page=1&per_page=25",
+        "next": "https://api.challonge.com/v2.1/tournaments/2134/participants.json?page=2&per_page=25",
+        "prev": "https://api.challonge.com/v2.1/tournaments/2134/participants.json?page=0&per_page=25"
+    }
+}

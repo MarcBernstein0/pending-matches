@@ -3,8 +3,10 @@ package challongebracketmatches
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -19,152 +21,6 @@ var server *httptest.Server
 
 const MOCK_API_KEY = "mock api key"
 
-var mockReturnValue string = `
-{
-	"data": [
-		{
-			"id": "1",
-			"type": "type",
-			"attributes": {
-				"tournament_type": "tournament_type",
-				"name": "testName",
-				"state": "state",
-				"game_name": "test"
-			}
-		}
-	],
-	"included": [
-		{
-			"id": "blazblue-central-fiction",
-			"type": "game",
-			"attributes": {
-				"name": "BlazBlue: Central Fiction",
-				"aliases": [
-					"blazeblue central fiction"
-				],
-				"verified": true
-			}
-		}
-	]
-}`
-
-var mockReturnValueMultiTournaments string = `
-{
-	"data": [
-		{
-			"id": "1",
-			"type": "type",
-			"attributes": {
-				"tournament_type": "tournament_type",
-				"name": "testName",
-				"state": "state",
-				"game_name": "test"
-			}
-		},
-		{
-			"id": "2",
-			"type": "type",
-			"attributes": {
-				"tournament_type": "tournament_type",
-				"name": "testName",
-				"state": "state",
-				"game_name": "test2"
-			}
-		}
-	],
-	"included": [
-		{
-			"id": "blazblue-central-fiction",
-			"type": "game",
-			"attributes": {
-				"name": "BlazBlue: Central Fiction",
-				"aliases": [
-					"blazeblue central fiction"
-				],
-				"verified": true
-			}
-		}
-	]
-}`
-
-var mockReturnValueMultiTournaments2 string = `
-{
-	"data": [
-		{
-			"id": "3",
-			"type": "type",
-			"attributes": {
-				"tournament_type": "tournament_type",
-				"name": "testName",
-				"state": "state",
-				"game_name": "test3"
-			}
-		},
-		{
-			"id": "4",
-			"type": "type",
-			"attributes": {
-				"tournament_type": "tournament_type",
-				"name": "testName",
-				"state": "state",
-				"game_name": "test4"
-			}
-		}
-	],
-	"included": [
-		{
-			"id": "blazblue-central-fiction",
-			"type": "game",
-			"attributes": {
-				"name": "BlazBlue: Central Fiction",
-				"aliases": [
-					"blazeblue central fiction"
-				],
-				"verified": true
-			}
-		}
-	]
-}`
-
-var mockReturnValueMultiTournaments3 string = `
-{
-	"data": [
-		{
-			"id": "5",
-			"type": "type",
-			"attributes": {
-				"tournament_type": "tournament_type",
-				"name": "testName",
-				"state": "state",
-				"game_name": "test5"
-			}
-		},
-		{
-			"id": "6",
-			"type": "type",
-			"attributes": {
-				"tournament_type": "tournament_type",
-				"name": "testName",
-				"state": "state",
-				"game_name": "test6"
-			}
-		}
-	],
-	"included": [
-		{
-			"id": "blazblue-central-fiction",
-			"type": "game",
-			"attributes": {
-				"name": "BlazBlue: Central Fiction",
-				"aliases": [
-					"blazeblue central fiction"
-				],
-				"verified": true
-			}
-		}
-	]
-}`
-
 func TestMain(m *testing.M) {
 	fmt.Println("Mock Server")
 	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -172,8 +28,14 @@ func TestMain(m *testing.M) {
 		trimPath := strings.TrimSpace(r.URL.Path)
 		fmt.Println("trim path", trimPath)
 		switch trimPath {
+		// mock endpoint for get tournaments
 		case "/tournaments.json":
 			mockFetchTournamentEndpoint(w, r)
+		// mock endpoint for get participants
+		case "/tournaments/1234/participants.json":
+			mockFetchParticipantEndpoint(w, r)
+		case "/tournaments/112358/participants.json":
+			mockFetchParticipantEndpoint(w, r)
 		default:
 			http.NotFoundHandler().ServeHTTP(w, r)
 		}
@@ -272,17 +134,22 @@ func TestFetchParticipants(t *testing.T) {
 			tournamentId   string
 			tournamentGame string
 		}
-		wantData []models.TournamentParticipants
+		wantData models.TournamentParticipants
 		wantErr  error
 	}{
-		// {
-		// 	testName:      "response not ok",
-		// 	mockDate:      time.Now().Local().Format("2006-01-02"),
-		// 	mockFetchData: New(server.URL, "bad api key", http.DefaultClient, 5*time.Second),
-		// 	inputData:     nil,
-		// 	wantData:      nil,
-		// 	wantErr:       fmt.Errorf("%w. %s", ErrResponseNotOK, http.StatusText(http.StatusUnauthorized)),
-		// },
+		{
+			testName:      "response not ok",
+			mockFetchData: New(server.URL, "bad api key", http.DefaultClient, 5*time.Second),
+			inputData: struct {
+				tournamentId   string
+				tournamentGame string
+			}{
+				tournamentId:   "1234",
+				tournamentGame: "testGameName",
+			},
+			wantData: models.TournamentParticipants{},
+			wantErr:  fmt.Errorf("%w. %s", ErrResponseNotOK, http.StatusText(http.StatusUnauthorized)),
+		},
 		{
 			testName:      "data found no pagination",
 			mockFetchData: New(server.URL, "mock api key", http.DefaultClient, 5*time.Second),
@@ -290,22 +157,45 @@ func TestFetchParticipants(t *testing.T) {
 				tournamentId   string
 				tournamentGame string
 			}{
-				tournamentId:   "1",
+				tournamentId:   "1234",
 				tournamentGame: "test",
 			},
-			wantData: []models.TournamentParticipants{
-				{
-					GameName:     "test",
-					TournamentID: 1,
-					Participant: map[int]string{
-						166014671: "test",
-						166014672: "test2",
-						166014673: "test3",
-						166014674: "test4",
-					},
+			wantData: models.TournamentParticipants{
+				GameName:     "test",
+				TournamentID: "1234",
+				Participant: map[string]string{
+					"1": "testName1",
+					"2": "testName2",
+					"3": "testName3",
+					"4": "testName4",
 				},
 			},
 			wantErr: nil,
+		},
+		{
+			testName:      "data found pagination",
+			mockFetchData: New(server.URL, "mock api key", http.DefaultClient, 5*time.Second),
+			inputData: struct {
+				tournamentId   string
+				tournamentGame string
+			}{
+				tournamentId:   "112358",
+				tournamentGame: "test",
+			},
+			wantData: models.TournamentParticipants{
+				GameName:     "test",
+				TournamentID: "112358",
+				Participant: map[string]string{
+					"1": "testName1",
+					"2": "testName2",
+					"3": "testName3",
+					"4": "testName4",
+					"5": "testName5",
+					"6": "testName6",
+					"7": "testName7",
+					"8": "testName8",
+				},
+			},
 		},
 	}
 
@@ -314,7 +204,7 @@ func TestFetchParticipants(t *testing.T) {
 			// t.Parallel()
 
 			gotData, gotErr := tc.mockFetchData.FetchParticipants(context.Background(), tc.inputData.tournamentId, tc.inputData.tournamentGame)
-			assert.ElementsMatch(t, tc.wantData, gotData)
+			assert.Equal(t, tc.wantData, gotData)
 			if tc.wantErr != nil {
 				assert.EqualError(t, gotErr, tc.wantErr.Error())
 			} else {
@@ -324,8 +214,30 @@ func TestFetchParticipants(t *testing.T) {
 	}
 }
 
-// mockFunctions
+// helper functions
+func testApiKeyAuth(apiKey string) bool {
+	return apiKey == MOCK_API_KEY
+}
+
+func readJsonFile(filename string) ([]byte, error) {
+	jsonFile, err := os.Open(filename)
+
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	defer jsonFile.Close()
+
+	byteValue, err := io.ReadAll(jsonFile)
+	return byteValue, err
+
+}
+
+// mock endpoints
 func mockFetchTournamentEndpoint(w http.ResponseWriter, r *http.Request) {
+	emptyReturn, _ := readJsonFile("./mock-api-responses/mock-tournament-response-empty.json")
+
 	apiKey := r.Header.Get("Authorization")
 	if !testApiKeyAuth(apiKey) {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -344,22 +256,10 @@ func mockFetchTournamentEndpoint(w http.ResponseWriter, r *http.Request) {
 	if date == "2023-07-16" {
 		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 		if page > 1 {
-			emptyReturn := `{
-				"data": [],
-				"included": [],
-				"meta": {
-					"count": 36
-				},
-				"links": {
-					"self": "https://api.challonge.com/v2.1/tournaments.json?page=2&per_page=25&state=in_progress&created_after=2023-07-22",
-					"next": "https://api.challonge.com/v2.1/tournaments.json?page=3&per_page=25",
-					"prev": "https://api.challonge.com/v2.1/tournaments.json?page=1&per_page=25"
-				}
-			}`
-			w.Write([]byte(emptyReturn))
+			w.Write(emptyReturn)
 			return
 		}
-		byteValue := []byte(mockReturnValue)
+		byteValue, _ := readJsonFile("./mock-api-responses/mock-tournament-response.json")
 		w.Write(byteValue)
 	}
 
@@ -367,22 +267,10 @@ func mockFetchTournamentEndpoint(w http.ResponseWriter, r *http.Request) {
 	if date == "2023-07-17" {
 		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 		if page > 1 {
-			emptyReturn := `{
-				"data": [],
-				"included": [],
-				"meta": {
-					"count": 36
-				},
-				"links": {
-					"self": "https://api.challonge.com/v2.1/tournaments.json?page=2&per_page=25&state=in_progress&created_after=2023-07-22",
-					"next": "https://api.challonge.com/v2.1/tournaments.json?page=3&per_page=25",
-					"prev": "https://api.challonge.com/v2.1/tournaments.json?page=1&per_page=25"
-				}
-			}`
-			w.Write([]byte(emptyReturn))
+			w.Write(emptyReturn)
 			return
 		}
-		byteValue := []byte(mockReturnValueMultiTournaments)
+		byteValue, _ := readJsonFile("./mock-api-responses/mock-tournament-multi-response.json")
 		w.Write(byteValue)
 	}
 
@@ -390,35 +278,56 @@ func mockFetchTournamentEndpoint(w http.ResponseWriter, r *http.Request) {
 	if date == "2023-07-18" {
 		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 		if page >= 4 {
-			emptyReturn := `{
-				"data": [],
-				"included": [],
-				"meta": {
-					"count": 36
-				},
-				"links": {
-					"self": "https://api.challonge.com/v2.1/tournaments.json?page=2&per_page=25&state=in_progress&created_after=2023-07-22",
-					"next": "https://api.challonge.com/v2.1/tournaments.json?page=3&per_page=25",
-					"prev": "https://api.challonge.com/v2.1/tournaments.json?page=1&per_page=25"
-				}
-			}`
-			w.Write([]byte(emptyReturn))
-			return
+			w.Write(emptyReturn)
 		}
 		if page == 1 {
-			byteValue := []byte(mockReturnValueMultiTournaments)
+			byteValue, _ := readJsonFile("./mock-api-responses/mock-tournament-multi-response.json")
 			w.Write(byteValue)
 		} else if page == 2 {
-			byteValue := []byte(mockReturnValueMultiTournaments2)
+			byteValue, _ := readJsonFile("./mock-api-responses/mock-tournament-multi-response-page2.json")
 			w.Write(byteValue)
 		} else if page == 3 {
-			byteValue := []byte(mockReturnValueMultiTournaments3)
+			byteValue, _ := readJsonFile("./mock-api-responses/mock-tournament-multi-response-page3.json")
 			w.Write(byteValue)
 		}
 	}
 
 }
 
-func testApiKeyAuth(apiKey string) bool {
-	return apiKey == MOCK_API_KEY
+func mockFetchParticipantEndpoint(w http.ResponseWriter, r *http.Request) {
+	emptyReturn, _ := readJsonFile("./mock-api-responses/mock-tournament-response-empty.json")
+
+	apiKey := r.Header.Get("Authorization")
+	if !testApiKeyAuth(apiKey) {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	if strings.Contains(r.URL.Path, "1234") {
+		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+		if page > 1 {
+			w.Write(emptyReturn)
+			return
+		}
+		byteValue, _ := readJsonFile("./mock-api-responses/mock-participant-response.json")
+		w.Write(byteValue)
+	}
+	if strings.Contains(r.URL.Path, "112358") {
+		fmt.Println("multi-page-print")
+		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+		if page >= 3 {
+			w.Write(emptyReturn)
+		}
+		if page == 1 {
+			byteValue, _ := readJsonFile("./mock-api-responses/mock-participant-response.json")
+			w.Write(byteValue)
+		}
+		if page == 2 {
+			byteValue, _ := readJsonFile("./mock-api-responses/mock-participant-response-page2.json")
+			w.Write(byteValue)
+		}
+	}
+
 }

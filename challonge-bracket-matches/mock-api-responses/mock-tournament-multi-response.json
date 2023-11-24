@@ -1,0 +1,37 @@
+{
+	"data": [
+		{
+			"id": "1",
+			"type": "type",
+			"attributes": {
+				"tournament_type": "tournament_type",
+				"name": "testName",
+				"state": "state",
+				"game_name": "test"
+			}
+		},
+		{
+			"id": "2",
+			"type": "type",
+			"attributes": {
+				"tournament_type": "tournament_type",
+				"name": "testName",
+				"state": "state",
+				"game_name": "test2"
+			}
+		}
+	],
+	"included": [
+		{
+			"id": "blazblue-central-fiction",
+			"type": "game",
+			"attributes": {
+				"name": "BlazBlue: Central Fiction",
+				"aliases": [
+					"blazeblue central fiction"
+				],
+				"verified": true
+			}
+		}
+	]
+}

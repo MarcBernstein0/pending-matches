@@ -1,0 +1,12 @@
+{
+    "data": [],
+    "included": [],
+    "meta": {
+        "count": 36
+    },
+    "links": {
+        "self": "https://api.challonge.com/v2.1/tournaments.json?page=2&per_page=25&state=in_progress&created_after=2023-07-22",
+        "next": "https://api.challonge.com/v2.1/tournaments.json?page=3&per_page=25",
+        "prev": "https://api.challonge.com/v2.1/tournaments.json?page=1&per_page=25"
+    }
+}
