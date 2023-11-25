@@ -30,10 +30,13 @@ func main() {
 	}
 
 	customClient := challongebracketmatches.New("https://api.challonge.com/v2.1", apiKey, http.DefaultClient, 20*time.Minute)
-	apiRes, _ := customClient.FetchTournaments(context.Background(), "2023-07-22")
+	apiRes, _ := customClient.FetchTournaments(context.Background(), "2023-11-25")
 	fmt.Println(apiRes)
 	for key, val := range apiRes {
 		fmt.Println(val)
-		fmt.Println(customClient.FetchParticipants(context.Background(), key, val))
+		apiParRes, _ := customClient.FetchParticipants(context.Background(), key, val)
+		apiMatchRes, _ := customClient.FetchMatches(context.Background(), apiParRes)
+		fmt.Printf("%+v\n", apiMatchRes)
+		break
 	}
 }

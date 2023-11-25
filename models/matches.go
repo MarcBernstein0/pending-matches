@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type (
 	Matches struct {
 		Data     []ChallongeMatch `json:"data"`
@@ -28,6 +30,11 @@ type (
 		Round               int                   `json:"round"`
 		SuggestedPlayOrder  int                   `json:"suggested_play_order"`
 		PointsByParticipant []PointsByParticipant `json:"points_by_participant"`
+		Timestamps          TimeStamps            `json:"timestamps"`
+	}
+
+	TimeStamps struct {
+		UnderwayAt time.Time `json:"underway_at"`
 	}
 
 	PointsByParticipant struct {
