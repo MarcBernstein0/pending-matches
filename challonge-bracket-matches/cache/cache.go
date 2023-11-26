@@ -1,9 +1,11 @@
 package cache
 
 import (
+	"context"
 	"fmt"
 	"time"
 
+	challongebracketmatches "github.com/MarcBernstein0/pending-matches/challonge-bracket-matches"
 	"github.com/MarcBernstein0/pending-matches/models"
 )
 
@@ -27,12 +29,28 @@ func NewCache(cacheTimer, clearCacheTimer time.Duration) *Cache {
 	}
 }
 
-func (c *Cache) UpdateCache(listTournamentParticipants []models.TournamentParticipants, date string) {
+func (c *Cache) UpdateCache(date string, fetchData challongebracketmatches.FetchData) error {
+	listTournamentParticipants := []models.TournamentParticipants{}
+	fmt.Println("Fetching tournaments")
+	tournaments, err := fetchData.FetchTournaments(context.Background(), date)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Fetching participants")
+	for key, val := range tournaments {
+		participants, err := fetchData.FetchParticipants(context.Background(), key, val)
+		if err != nil {
+			return err
+		}
+		listTournamentParticipants = append(listTournamentParticipants, participants)
+	}
 	fmt.Println("Cache is updating")
 	c.data[date] = cacheData{
 		tournamentsAndParticipants: listTournamentParticipants,
 		timeStamp:                  time.Now(),
 	}
+	fmt.Printf("cache: %+v\n", c)
+	return nil
 }
 
 func (c *Cache) GetData(date string) []models.TournamentParticipants {

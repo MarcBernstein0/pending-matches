@@ -85,7 +85,6 @@ func (c *customClient) FetchTournaments(ctx context.Context, date string) (map[s
 			fmt.Println(err)
 			return nil, fmt.Errorf("%w. %s", err, http.StatusText(http.StatusInternalServerError))
 		}
-
 		if len(tournaments.Data) == 0 {
 			paginationLeft = false
 		} else {
@@ -156,7 +155,7 @@ func (c *customClient) FetchMatches(ctx context.Context, tournamentParticipants 
 	matchResult := models.TournamentMatches{
 		GameName:     tournamentParticipants.GameName,
 		TournamentId: tournamentParticipants.TournamentID,
-		MatchList:    make([]models.Match, 0),
+		MatchList:    []models.Match{},
 	}
 
 	params := map[string]string{
@@ -168,7 +167,7 @@ func (c *customClient) FetchMatches(ctx context.Context, tournamentParticipants 
 	res, err := c.get(ctx, http.MethodGet, c.baseURL+"/tournaments/"+matchResult.TournamentId+"/matches.json", nil, params)
 	if err != nil {
 		// TODO: properly handle error then return
-		fmt.Println(err)
+		fmt.Println("error with the http request", err)
 		return models.TournamentMatches{}, err
 	}
 
@@ -184,8 +183,7 @@ func (c *customClient) FetchMatches(ctx context.Context, tournamentParticipants 
 		return models.TournamentMatches{}, fmt.Errorf("%w. %s", err, http.StatusText(http.StatusInternalServerError))
 	}
 
-	stations := getStationsMap(matches)
-	fmt.Println("stations", stations)
+	stationsMap := getStationsMap(matches)
 
 	if len(matches.Data) == 0 {
 		return matchResult, nil
@@ -199,11 +197,11 @@ func (c *customClient) FetchMatches(ctx context.Context, tournamentParticipants 
 			Round:              match.Attributes.Round,
 			SuggestedPlayOrder: match.Attributes.SuggestedPlayOrder,
 			Underway:           !match.Attributes.Timestamps.UnderwayAt.IsZero(),
+			Station:            stationsMap[match.Relationship.Station.Data.Id],
 		}
 		matchResult.MatchList = append(matchResult.MatchList, matchData)
 	}
 	return matchResult, nil
-
 	// for some reason pagination is not working for matches, no idea why
 	// dealing with paginated responses
 	// paginationLeft := true
@@ -280,16 +278,19 @@ func (c *customClient) get(ctx context.Context, method, urlPath string, reqBody 
 	}
 	req.URL.RawQuery = q.Encode()
 
-	fmt.Println(req.URL)
 	return c.client.Do(req)
 }
 
 // Return a map of station id(string) -> station name(string)
 func getStationsMap(matches models.Matches) map[string]string {
-
+	// fmt.Printf("%+v\n", matches.Included)
+	stationMap := make(map[string]string)
 	for _, includedInfo := range matches.Included {
-		fmt.Println(includedInfo)
+		fmt.Println("station", includedInfo.Type, includedInfo.Attributes.Name)
+		if includedInfo.Type == "station" {
+			stationMap[includedInfo.Id] = includedInfo.Attributes.Name
+		}
 	}
 
-	return nil
+	return stationMap
 }

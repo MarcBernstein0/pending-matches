@@ -44,7 +44,7 @@ type (
 	Included struct {
 		Id         string             `json:"id"`
 		Type       string             `json:"type"`
-		Attributes IncludedAttributes `json:"included"`
+		Attributes IncludedAttributes `json:"attributes"`
 	}
 
 	IncludedAttributes struct {

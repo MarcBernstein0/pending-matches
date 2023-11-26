@@ -1,0 +1,248 @@
+{
+    "data": [
+        {
+            "id": "345160410",
+            "type": "match",
+            "attributes": {
+                "state": "open",
+                "round": 1,
+                "identifier": "A",
+                "scores": "0 - 0",
+                "suggested_play_order": 1,
+                "score_in_sets": [],
+                "points_by_participant": [
+                    {
+                        "participant_id": 1,
+                        "scores": []
+                    },
+                    {
+                        "participant_id": 2,
+                        "scores": []
+                    }
+                ],
+                "timestamps": {
+                    "started_at": "2023-11-25T14:46:41.552Z",
+                    "created_at": "2023-11-25T14:46:40.502Z",
+                    "updated_at": "2023-11-25T14:57:06.252Z",
+                    "underway_at": "2023-11-25T14:57:06.247Z"
+                },
+                "winner_id": null,
+                "tie": false
+            },
+            "relationships": {
+                "attachments": {
+                    "data": [],
+                    "links": {
+                        "related": "https://api.challonge.com/v2.1/tournaments/13774996/matches/345160410/attachments.json",
+                        "meta": {
+                            "count": 0
+                        }
+                    }
+                },
+                "station": {
+                    "data": {
+                        "id": "385383",
+                        "type": "station"
+                    },
+                    "links": {
+                        "related": "https://api.challonge.com/v2.1/tournaments/13774996/stations/385383.json"
+                    }
+                }
+            }
+        },
+        {
+            "id": "345160411",
+            "type": "match",
+            "attributes": {
+                "state": "open",
+                "round": 1,
+                "identifier": "B",
+                "scores": "0 - 0",
+                "suggested_play_order": 2,
+                "score_in_sets": [],
+                "points_by_participant": [
+                    {
+                        "participant_id": 3,
+                        "scores": []
+                    },
+                    {
+                        "participant_id": 4,
+                        "scores": []
+                    }
+                ],
+                "timestamps": {
+                    "started_at": "2023-11-25T14:46:41.616Z",
+                    "created_at": "2023-11-25T14:46:40.508Z",
+                    "updated_at": "2023-11-25T14:46:41.630Z",
+                    "underway_at": null
+                },
+                "winner_id": null,
+                "tie": false
+            },
+            "relationships": {
+                "attachments": {
+                    "data": [],
+                    "links": {
+                        "related": "https://api.challonge.com/v2.1/tournaments/13774996/matches/345160411/attachments.json",
+                        "meta": {
+                            "count": 0
+                        }
+                    }
+                },
+                "station": {
+                    "data": {
+                        "id": "385384",
+                        "type": "station"
+                    },
+                    "links": {
+                        "related": "https://api.challonge.com/v2.1/tournaments/13774996/stations/385384.json"
+                    }
+                }
+            }
+        },
+        {
+            "id": "345160413",
+            "type": "match",
+            "attributes": {
+                "state": "open",
+                "round": 1,
+                "identifier": "D",
+                "scores": "0 - 0",
+                "suggested_play_order": 4,
+                "score_in_sets": [],
+                "points_by_participant": [
+                    {
+                        "participant_id": 5,
+                        "scores": []
+                    },
+                    {
+                        "participant_id": 6,
+                        "scores": []
+                    }
+                ],
+                "timestamps": {
+                    "started_at": "2023-11-25T14:46:41.753Z",
+                    "created_at": "2023-11-25T14:46:40.525Z",
+                    "updated_at": "2023-11-25T14:46:41.753Z",
+                    "underway_at": null
+                },
+                "winner_id": null,
+                "tie": false
+            },
+            "relationships": {
+                "attachments": {
+                    "data": [],
+                    "links": {
+                        "related": "https://api.challonge.com/v2.1/tournaments/13774996/matches/345160413/attachments.json",
+                        "meta": {
+                            "count": 0
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "included": [
+        {
+            "id": "385383",
+            "type": "station",
+            "attributes": {
+                "id": 385383,
+                "name": "TestStation1",
+                "stream_url": "",
+                "details": "",
+                "details_format": "html"
+            },
+            "relationships": {
+                "match": {
+                    "data": {
+                        "id": "345160410",
+                        "type": "match"
+                    },
+                    "links": {
+                        "related": "https://api.challonge.com/v2.1/tournaments/13774996/matches/345160410.json"
+                    }
+                },
+                "station_queuers": {
+                    "data": [],
+                    "links": {
+                        "related": "https://api.challonge.com/v2.1/tournaments/13774996/stations/385383/station_queuers.json",
+                        "meta": {
+                            "count": 0
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "id": "385384",
+            "type": "station",
+            "attributes": {
+                "id": 385384,
+                "name": "TestStation2",
+                "stream_url": "",
+                "details": "",
+                "details_format": "html"
+            },
+            "relationships": {
+                "match": {
+                    "data": {
+                        "id": "345160411",
+                        "type": "match"
+                    },
+                    "links": {
+                        "related": "https://api.challonge.com/v2.1/tournaments/13774996/matches/345160411.json"
+                    }
+                },
+                "station_queuers": {
+                    "data": [],
+                    "links": {
+                        "related": "https://api.challonge.com/v2.1/tournaments/13774996/stations/385384/station_queuers.json",
+                        "meta": {
+                            "count": 0
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "id": "385385",
+            "type": "station",
+            "attributes": {
+                "id": 385385,
+                "name": "TestStation3",
+                "stream_url": "",
+                "details": "",
+                "details_format": "html"
+            },
+            "relationships": {
+                "match": {
+                    "data": {
+                        "id": "345160412",
+                        "type": "match"
+                    },
+                    "links": {
+                        "related": "https://api.challonge.com/v2.1/tournaments/13774996/matches/345160412.json"
+                    }
+                },
+                "station_queuers": {
+                    "data": [],
+                    "links": {
+                        "related": "https://api.challonge.com/v2.1/tournaments/13774996/stations/385385/station_queuers.json",
+                        "meta": {
+                            "count": 0
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "meta": {
+        "count": 17
+    },
+    "links": {
+        "self": "https://api.challonge.com/v2.1/tournaments/13774996/matches.json?per_page=25&state=open&page=1",
+        "next": "https://api.challonge.com/v2.1/tournaments/13774996/matches.json?page=2&per_page=25",
+        "prev": "https://api.challonge.com/v2.1/tournaments/13774996/matches.json?page=0&per_page=25"
+    }
+}
