@@ -94,8 +94,8 @@ func TestUpdateCache(t *testing.T) {
 			mockFetchData: challongebracketmatches.New(server.URL, MOCK_API_KEY, http.DefaultClient, 5*time.Second),
 			wantData: []models.TournamentParticipants{
 				{
-					GameName:     "test",
-					TournamentID: "1234",
+					GameName:     "test5",
+					TournamentID: "5",
 					Participant: map[string]string{
 						"1": "testName1",
 						"2": "testName2",
@@ -107,6 +107,68 @@ func TestUpdateCache(t *testing.T) {
 						"8": "testName8",
 					},
 				},
+				{
+					GameName:     "test6",
+					TournamentID: "6",
+					Participant: map[string]string{
+						"1": "testName1",
+						"2": "testName2",
+						"3": "testName3",
+						"4": "testName4",
+						"5": "testName5",
+						"6": "testName6",
+						"7": "testName7",
+						"8": "testName8",
+					},
+				},
+				{
+					GameName:     "test",
+					TournamentID: "1",
+					Participant: map[string]string{
+						"1": "testName1",
+						"2": "testName2",
+						"3": "testName3",
+						"4": "testName4",
+						"5": "testName5",
+						"6": "testName6",
+						"7": "testName7",
+						"8": "testName8",
+					},
+				},
+				{
+					GameName:     "test2",
+					TournamentID: "2",
+					Participant: map[string]string{
+						"1": "testName1",
+						"2": "testName2",
+						"3": "testName3",
+						"4": "testName4",
+					},
+				},
+				{
+					GameName:     "test3",
+					TournamentID: "3",
+					Participant: map[string]string{
+						"1": "testName1",
+						"2": "testName2",
+						"3": "testName3",
+						"4": "testName4",
+						"5": "testName5",
+						"6": "testName6",
+						"7": "testName7",
+						"8": "testName8",
+					},
+				},
+				{
+					GameName:     "test4",
+					TournamentID: "4",
+					Participant: map[string]string{
+						"1": "testName1",
+						"2": "testName2",
+						"3": "testName3",
+						"4": "testName4",
+					},
+				},
 			},
 		},
 	}
@@ -114,8 +176,6 @@ func TestUpdateCache(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// When
 			gotErr := mockCache.UpdateCache(tc.date, tc.mockFetchData)
-			fmt.Println(gotErr)
-
 			// Then
 			if tc.wantErr != nil {
 				assert.EqualError(t, gotErr, tc.wantErr.Error())
@@ -126,6 +186,28 @@ func TestUpdateCache(t *testing.T) {
 		})
 
 	}
+}
+
+func TestShouldUpdate(t *testing.T) {
+	t.Run("It should return true when the timer has been exceeded", func(t *testing.T) {
+		// Given
+		mockCache := NewCache(2*time.Microsecond, 2*time.Microsecond)
+		mockCache.data["2006-01-02"] = cacheData{}
+		// When
+		time.Sleep(5 * time.Millisecond)
+		// Then
+		assert.Equal(t, true, mockCache.ShouldUpdate("2006-01-02"))
+	})
+
+	t.Run("It should return false when timer has not been exceeded", func(t *testing.T) {
+		// Given
+		mockCache := NewCache(5*time.Microsecond, 5*time.Microsecond)
+		mockCache.data["2006-01-02"] = cacheData{}
+		// When
+		time.Sleep(2 * time.Millisecond)
+		// Then
+		assert.Equal(t, true, mockCache.ShouldUpdate("2006-01-02"))
+	})
 }
 
 // helper functions

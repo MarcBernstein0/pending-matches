@@ -49,7 +49,6 @@ func (c *Cache) UpdateCache(date string, fetchData challongebracketmatches.Fetch
 		tournamentsAndParticipants: listTournamentParticipants,
 		timeStamp:                  time.Now(),
 	}
-	fmt.Printf("cache: %+v\n", c)
 	return nil
 }
 
