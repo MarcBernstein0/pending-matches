@@ -14,7 +14,6 @@ import (
 	challongebracketmatches "github.com/MarcBernstein0/pending-matches/challonge-bracket-matches"
 	"github.com/MarcBernstein0/pending-matches/models"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var server *httptest.Server
@@ -61,7 +60,10 @@ func TestCreateCache(t *testing.T) {
 	// When
 	mockCache := NewCache(5*time.Minute, 5*time.Minute)
 	// Then
-	require.Equal(t, givenCache, mockCache)
+	assert.Equal(t, givenCache.data, mockCache.data)
+	assert.Equal(t, givenCache.updateCacheTimer, mockCache.updateCacheTimer)
+	assert.Equal(t, givenCache.clearCacheTimer, mockCache.clearCacheTimer)
+
 }
 
 func TestUpdateCache(t *testing.T) {
@@ -208,6 +210,98 @@ func TestShouldUpdate(t *testing.T) {
 		// Then
 		assert.Equal(t, true, mockCache.ShouldUpdate("2006-01-02"))
 	})
+
+	t.Run("It should return true as no data exists at the given date", func(t *testing.T) {
+		// Given
+		mockCache := NewCache(5*time.Microsecond, 5*time.Microsecond)
+		// When
+		res := mockCache.ShouldUpdate("2006-01-02")
+		// Then
+		assert.Equal(t, true, res)
+	})
+}
+
+func TestIsCacheEmptyAtDate(t *testing.T) {
+	t.Run("It should return false if data exists at a given date", func(t *testing.T) {
+		// Given
+		mockCache := NewCache(5*time.Microsecond, 5*time.Microsecond)
+		mockCache.data["2006-01-02"] = cacheData{
+			tournamentsAndParticipants: []models.TournamentParticipants{
+				{
+					GameName:     "test",
+					TournamentID: "1234",
+					Participant: map[string]string{
+						"123": "123",
+						"456": "456",
+					},
+				},
+			},
+		}
+		// When
+		res := mockCache.IsCacheEmptyAtDate("2006-01-02")
+		// Then
+		assert.Equal(t, false, res)
+	})
+
+	t.Run("It should return true if data does not exist at a given date", func(t *testing.T) {
+		// Given
+		mockCache := NewCache(5*time.Microsecond, 5*time.Microsecond)
+		mockCache.data["2006-01-02"] = cacheData{}
+		// When
+		res := mockCache.IsCacheEmptyAtDate("2006-01-02")
+		// Then
+		assert.Equal(t, true, res)
+	})
+
+	t.Run("It should return true if there is no entry for a given date", func(t *testing.T) {
+		// Given
+		mockCache := NewCache(5*time.Microsecond, 5*time.Microsecond)
+		// When
+		res := mockCache.IsCacheEmptyAtDate("2006-01-02")
+		// Then
+		assert.Equal(t, true, res)
+	})
+}
+
+func TestShouldClearCacheData(t *testing.T) {
+	t.Run("It should return true if clearCacheTimer is has been exceeded", func(t *testing.T) {
+		// Given
+		mockCache := NewCache(2*time.Microsecond, 2*time.Microsecond)
+		// When
+		time.Sleep(5 * time.Millisecond)
+		// Then
+		assert.Equal(t, true, mockCache.ShouldClearCacheData())
+	})
+
+	t.Run("It should return false when timer has not been exceeded", func(t *testing.T) {
+		// Given
+		mockCache := NewCache(5*time.Millisecond, 5*time.Millisecond)
+		// When
+		time.Sleep(2 * time.Microsecond)
+		// Then
+		assert.Equal(t, false, mockCache.ShouldClearCacheData())
+	})
+}
+
+func TestClearCacheData(t *testing.T) {
+	// Given
+	mockCache := NewCache(5*time.Microsecond, 5*time.Microsecond)
+	mockCache.data["2006-01-02"] = cacheData{
+		tournamentsAndParticipants: []models.TournamentParticipants{
+			{
+				GameName:     "test",
+				TournamentID: "1234",
+				Participant: map[string]string{
+					"123": "123",
+					"456": "456",
+				},
+			},
+		},
+	}
+	// When
+	mockCache.ClearCache()
+	// Then
+	assert.Empty(t, mockCache.data)
 }
 
 // helper functions
@@ -276,7 +370,6 @@ func mockFetchParticipantsEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	if strings.Contains(r.URL.Path, "1") {
-		// fmt.Println("multi-page-print")
 		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 		if page >= 3 {
 			w.Write(emptyReturn)
@@ -300,7 +393,6 @@ func mockFetchParticipantsEndpoint(w http.ResponseWriter, r *http.Request) {
 		w.Write(byteValue)
 	}
 	if strings.Contains(r.URL.Path, "3") {
-		// fmt.Println("multi-page-print")
 		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 		if page >= 3 {
 			w.Write(emptyReturn)
@@ -315,7 +407,6 @@ func mockFetchParticipantsEndpoint(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if strings.Contains(r.URL.Path, "4") {
-		// fmt.Println("multi-page-print")
 		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 		if page >= 2 {
 			w.Write(emptyReturn)
@@ -326,7 +417,6 @@ func mockFetchParticipantsEndpoint(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if strings.Contains(r.URL.Path, "5") {
-		// fmt.Println("multi-page-print")
 		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 		if page >= 3 {
 			w.Write(emptyReturn)
@@ -341,7 +431,6 @@ func mockFetchParticipantsEndpoint(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if strings.Contains(r.URL.Path, "6") {
-		// fmt.Println("multi-page-print")
 		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 		if page >= 3 {
 			w.Write(emptyReturn)

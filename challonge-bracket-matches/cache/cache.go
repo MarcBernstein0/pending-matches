@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	challongebracketmatches "github.com/MarcBernstein0/pending-matches/challonge-bracket-matches"
@@ -26,25 +27,24 @@ func NewCache(cacheTimer, clearCacheTimer time.Duration) *Cache {
 		data:             map[string]cacheData{},
 		updateCacheTimer: cacheTimer,
 		clearCacheTimer:  clearCacheTimer,
+		lastClearCache:   time.Now(),
 	}
 }
 
 func (c *Cache) UpdateCache(date string, fetchData challongebracketmatches.FetchData) error {
-	listTournamentParticipants := []models.TournamentParticipants{}
-	fmt.Println("Fetching tournaments")
+	fmt.Println("Fetching tournaments") // TODO: Replace print with logging
 	tournaments, err := fetchData.FetchTournaments(context.Background(), date)
 	if err != nil {
 		return err
 	}
-	fmt.Println("Fetching participants")
-	for key, val := range tournaments {
-		participants, err := fetchData.FetchParticipants(context.Background(), key, val)
-		if err != nil {
-			return err
-		}
-		listTournamentParticipants = append(listTournamentParticipants, participants)
+
+	fmt.Println("Fetching participants") // TODO: Replace print with logging
+	listTournamentParticipants, err := c.getParticipantsConcurrently(tournaments, fetchData)
+	if err != nil {
+		return err
 	}
-	fmt.Println("Cache is updating")
+
+	fmt.Println("Cache is updating") // TODO: Replace print with logging
 	c.data[date] = cacheData{
 		tournamentsAndParticipants: listTournamentParticipants,
 		timeStamp:                  time.Now(),
@@ -53,7 +53,7 @@ func (c *Cache) UpdateCache(date string, fetchData challongebracketmatches.Fetch
 }
 
 func (c *Cache) GetData(date string) []models.TournamentParticipants {
-	fmt.Println("Getting data from cache")
+	fmt.Println("Getting data from cache") // TODO: Replace print with logging
 	return c.data[date].tournamentsAndParticipants
 }
 
@@ -65,7 +65,7 @@ func (c *Cache) ShouldUpdate(date string) bool {
 	return true
 }
 
-func (c *Cache) IsCacheEmptyDate(date string) bool {
+func (c *Cache) IsCacheEmptyAtDate(date string) bool {
 	if data, ok := c.data[date]; ok {
 		return len(data.tournamentsAndParticipants) == 0
 	}
@@ -80,4 +80,55 @@ func (c *Cache) ShouldClearCacheData() bool {
 func (c *Cache) ClearCache() {
 	c.data = map[string]cacheData{}
 	c.lastClearCache = time.Now()
+}
+
+func (c *Cache) getParticipantsConcurrently(tournaments map[string]string, fetchData challongebracketmatches.FetchData) ([]models.TournamentParticipants, error) {
+	var tournamentParticipants []models.TournamentParticipants
+
+	chanResponse := make(chan struct {
+		tournamentParticipant *models.TournamentParticipants
+		err                   error
+	})
+	var wg sync.WaitGroup
+	for key, val := range tournaments {
+		wg.Add(1)
+		go func(tournamentId, tournamentGame string, chanResponse chan struct {
+			tournamentParticipant *models.TournamentParticipants
+			err                   error
+		}, wg *sync.WaitGroup) {
+			defer wg.Done()
+			participants, err := fetchData.FetchParticipants(context.Background(), tournamentId, tournamentGame)
+			if err != nil {
+				chanResponse <- struct {
+					tournamentParticipant *models.TournamentParticipants
+					err                   error
+				}{
+					tournamentParticipant: nil,
+					err:                   err,
+				}
+				return
+			}
+			chanResponse <- struct {
+				tournamentParticipant *models.TournamentParticipants
+				err                   error
+			}{
+				tournamentParticipant: &participants,
+				err:                   nil,
+			}
+		}(key, val, chanResponse, &wg)
+	}
+
+	go func() {
+		wg.Wait()
+		close(chanResponse)
+	}()
+
+	for getParticipantResult := range chanResponse {
+		if getParticipantResult.err != nil {
+			return nil, getParticipantResult.err
+		}
+		tournamentParticipants = append(tournamentParticipants, *getParticipantResult.tournamentParticipant)
+	}
+
+	return tournamentParticipants, nil
 }
