@@ -11,6 +11,8 @@ import (
 	challongebracketmatches "github.com/MarcBernstein0/pending-matches/challonge-bracket-matches"
 	"github.com/MarcBernstein0/pending-matches/challonge-bracket-matches/cache"
 	"github.com/MarcBernstein0/pending-matches/route"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
@@ -45,7 +47,14 @@ func main() {
 	customClient := challongebracketmatches.New("https://api.challonge.com/v2.1", apiKey, http.DefaultClient, 20*time.Minute)
 	customCache := cache.NewCache(time.Duration(cacheTimer)*time.Minute, time.Duration(cacheClearTimer)*time.Hour)
 
-	r := route.RouterSetup(customClient, customCache)
+	r := chi.NewRouter()
+
+	r.Use(middleware.Logger)
+	r.Use(middleware.Heartbeat("/ping"))
+
+	apiRoute := route.RouterSetup(customClient, customCache)
+
+	r.Mount("/api", apiRoute)
 
 	log.Fatal(http.ListenAndServe(":"+port, r))
 }

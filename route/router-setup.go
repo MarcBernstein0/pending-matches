@@ -13,8 +13,9 @@ func RouterSetup(fetchData challongebracketmatches.FetchData, cache *cache.Cache
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
+	r.Use(middleware.Heartbeat("/ping"))
 
-	r.Route("/api/v1", func(r chi.Router) {
+	r.Route("/v1", func(r chi.Router) {
 		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
@@ -24,6 +25,7 @@ func RouterSetup(fetchData challongebracketmatches.FetchData, cache *cache.Cache
 			}
 			`))
 		})
+		r.Get("/matches", GetMatches(fetchData, cache))
 	})
 
 	return r
