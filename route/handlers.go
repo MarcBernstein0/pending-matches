@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	challongebracketmatches "github.com/MarcBernstein0/pending-matches/challonge-bracket-matches"
@@ -68,4 +69,55 @@ func GetMatches(fetchData challongebracketmatches.FetchData, cache *cache.Cache)
 		// fmt.Println(tournamentsAndParticipants)
 		json.NewEncoder(w).Encode(matches)
 	}
+}
+
+func getMatchesConcurrently(tournamentsAndParticipants []models.TournamentParticipants, fetchData challongebracketmatches.FetchData) ([]models.TournamentMatches, error) {
+	var matches []models.TournamentMatches
+
+	chanResponse := make(chan struct {
+		tournamentMatches *models.TournamentMatches
+		err               error
+	})
+	var wg sync.WaitGroup
+	for _, elem := range tournamentsAndParticipants {
+		wg.Add(1)
+		go func(tournament models.TournamentParticipants, chanResponse chan struct {
+			tournamentMatches *models.TournamentMatches
+			err               error
+		}) {
+			defer wg.Done()
+			match, err := fetchData.FetchMatches(tournament)
+			if err != nil {
+				chanResponse <- struct {
+					tournamentMatches *models.TournamentMatches
+					err               error
+				}{
+					tournamentMatches: nil,
+					err:               err,
+				}
+				return
+			}
+			chanResponse <- struct {
+				tournamentMatches *models.TournamentMatches
+				err               error
+			}{
+				tournamentMatches: &match,
+				err:               nil,
+			}
+		}(elem, chanResponse)
+	}
+
+	go func() {
+		wg.Wait()
+		close(chanResponse)
+	}()
+
+	for getMatchesResult := range chanResponse {
+		if getMatchesResult.err != nil {
+			return nil, getMatchesResult.err
+		}
+		matches = append(matches, *getMatchesResult.tournamentMatches)
+	}
+
+	return matches, nil
 }
