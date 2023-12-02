@@ -1,7 +1,6 @@
 package challongebracketmatches
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -21,36 +20,34 @@ var (
 
 type (
 	customClient struct {
-		baseURL        string
-		client         *http.Client
-		apiKey         string
-		contextTimeout time.Duration
+		baseURL string
+		client  *http.Client
+		apiKey  string
 	}
 
 	FetchData interface {
 		// FetchTournaments fetch all tournaments created after a specific date
 		// GET https://api.challonge.com/v2.1/tournaments.json?page={}&per_page=25
-		FetchTournaments(ctx context.Context, date string) (map[string]string, error)
+		FetchTournaments(date string) (map[string]string, error)
 		// FetchParticipants fetch all participants for a tournament
 		// GET https://api.challonge.com/v2.1/tournaments/{tournaments}/participants.json?page={}&per_page=25
-		FetchParticipants(ctx context.Context, tournamentId, tournamentGame string) (models.TournamentParticipants, error)
+		FetchParticipants(tournamentId, tournamentGame string) (models.TournamentParticipants, error)
 		// FetchMatches fetch matches for a tournament
 		// GET https://api.challonge.com/v2.1/tournaments/{tournaments}/matches.json?page=1&per_page=25&state=open
-		FetchMatches(ctx context.Context, tournamentParticipants models.TournamentParticipants) (models.TournamentMatches, error)
+		FetchMatches(tournamentParticipants models.TournamentParticipants) (models.TournamentMatches, error)
 	}
 )
 
 func New(baseURL, apiKey string, client *http.Client, contextTimeout time.Duration) *customClient {
 	return &customClient{
-		baseURL:        baseURL,
-		client:         client,
-		apiKey:         apiKey,
-		contextTimeout: contextTimeout,
+		baseURL: baseURL,
+		client:  client,
+		apiKey:  apiKey,
 	}
 }
 
 // Return map of type int -> string where int is the tournamentId and string is the game name
-func (c *customClient) FetchTournaments(ctx context.Context, date string) (map[string]string, error) {
+func (c *customClient) FetchTournaments(date string) (map[string]string, error) {
 
 	resMap := make(map[string]string)
 
@@ -66,7 +63,7 @@ func (c *customClient) FetchTournaments(ctx context.Context, date string) (map[s
 			"per_page":      "25",
 		}
 
-		res, err := c.get(ctx, http.MethodGet, c.baseURL+"/tournaments.json", nil, params)
+		res, err := c.get(http.MethodGet, c.baseURL+"/tournaments.json", nil, params)
 		if err != nil {
 			// TODO: properly handle error then return
 			fmt.Println(err)
@@ -100,7 +97,7 @@ func (c *customClient) FetchTournaments(ctx context.Context, date string) (map[s
 }
 
 // Return a models.TournamentParticipants with a map of participants ids -> participant tags
-func (c *customClient) FetchParticipants(ctx context.Context, tournamentId, tournamentGame string) (models.TournamentParticipants, error) {
+func (c *customClient) FetchParticipants(tournamentId, tournamentGame string) (models.TournamentParticipants, error) {
 	participants := models.TournamentParticipants{
 		GameName:     tournamentGame,
 		TournamentID: tournamentId,
@@ -117,7 +114,7 @@ func (c *customClient) FetchParticipants(ctx context.Context, tournamentId, tour
 			"per_page": "25",
 		}
 
-		res, err := c.get(ctx, http.MethodGet, c.baseURL+"/tournaments/"+tournamentId+"/participants.json", nil, params)
+		res, err := c.get(http.MethodGet, c.baseURL+"/tournaments/"+tournamentId+"/participants.json", nil, params)
 		if err != nil {
 			// TODO: properly handle error then return
 			fmt.Println(err)
@@ -151,7 +148,7 @@ func (c *customClient) FetchParticipants(ctx context.Context, tournamentId, tour
 }
 
 // Return a models.TournamentMatches with a list of Match structs that include player names
-func (c *customClient) FetchMatches(ctx context.Context, tournamentParticipants models.TournamentParticipants) (models.TournamentMatches, error) {
+func (c *customClient) FetchMatches(tournamentParticipants models.TournamentParticipants) (models.TournamentMatches, error) {
 	matchResult := models.TournamentMatches{
 		GameName:     tournamentParticipants.GameName,
 		TournamentId: tournamentParticipants.TournamentID,
@@ -164,7 +161,7 @@ func (c *customClient) FetchMatches(ctx context.Context, tournamentParticipants 
 		"state":    "open",
 	}
 
-	res, err := c.get(ctx, http.MethodGet, c.baseURL+"/tournaments/"+matchResult.TournamentId+"/matches.json", nil, params)
+	res, err := c.get(http.MethodGet, c.baseURL+"/tournaments/"+matchResult.TournamentId+"/matches.json", nil, params)
 	if err != nil {
 		// TODO: properly handle error then return
 		fmt.Println("error with the http request", err)
@@ -257,11 +254,8 @@ func (c *customClient) FetchMatches(ctx context.Context, tournamentParticipants 
 	// return matchResult, nil
 }
 
-func (c *customClient) get(ctx context.Context, method, urlPath string, reqBody io.Reader, params map[string]string) (resp *http.Response, err error) {
-	ctx, cancel := context.WithTimeout(ctx, c.contextTimeout)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, method, urlPath, reqBody)
+func (c *customClient) get(method, urlPath string, reqBody io.Reader, params map[string]string) (resp *http.Response, err error) {
+	req, err := http.NewRequest(method, urlPath, reqBody)
 	if err != nil {
 		// gracefully handle error and pass along
 		return nil, err

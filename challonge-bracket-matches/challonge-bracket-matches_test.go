@@ -1,7 +1,6 @@
 package challongebracketmatches
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -54,10 +53,9 @@ func TestMain(m *testing.M) {
 func TestCreateCustomClient(t *testing.T) {
 	// Given
 	givenCustomClient := &customClient{
-		baseURL:        "testEndpoint",
-		client:         http.DefaultClient,
-		apiKey:         "1234567890",
-		contextTimeout: 20,
+		baseURL: "testEndpoint",
+		client:  http.DefaultClient,
+		apiKey:  "1234567890",
 	}
 	// When
 	res := New("testEndpoint", "1234567890", http.DefaultClient, 20)
@@ -126,7 +124,7 @@ func TestFetchTournaments(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.testName, func(t *testing.T) {
 			// When
-			gotData, gotErr := tc.mockFetchData.FetchTournaments(context.Background(), tc.mockDate)
+			gotData, gotErr := tc.mockFetchData.FetchTournaments(tc.mockDate)
 
 			//Then
 			require.Equal(t, tc.wantData, gotData)
@@ -233,7 +231,7 @@ func TestFetchParticipants(t *testing.T) {
 		t.Run(tc.testName, func(t *testing.T) {
 			// t.Parallel()
 
-			gotData, gotErr := tc.mockFetchData.FetchParticipants(context.Background(), tc.inputData.tournamentId, tc.inputData.tournamentGame)
+			gotData, gotErr := tc.mockFetchData.FetchParticipants(tc.inputData.tournamentId, tc.inputData.tournamentGame)
 			assert.Equal(t, tc.wantData, gotData)
 			if tc.wantErr != nil {
 				assert.EqualError(t, gotErr, tc.wantErr.Error())
@@ -340,7 +338,7 @@ func TestFetchMatches(t *testing.T) {
 		t.Run(tc.testName, func(t *testing.T) {
 			// t.Parallel()
 
-			gotData, gotErr := tc.mockFetchData.FetchMatches(context.Background(), tc.inputData)
+			gotData, gotErr := tc.mockFetchData.FetchMatches(tc.inputData)
 			assert.Equal(t, tc.wantData.GameName, gotData.GameName)
 			assert.Equal(t, tc.wantData.TournamentId, gotData.TournamentId)
 			assert.ElementsMatch(t, tc.wantData.MatchList, gotData.MatchList)

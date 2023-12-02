@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -33,9 +32,13 @@ func NewCache(cacheTimer, clearCacheTimer time.Duration) *Cache {
 
 func (c *Cache) UpdateCache(date string, fetchData challongebracketmatches.FetchData) error {
 	fmt.Println("Fetching tournaments") // TODO: Replace print with logging
-	tournaments, err := fetchData.FetchTournaments(context.Background(), date)
+	tournaments, err := fetchData.FetchTournaments(date)
 	if err != nil {
 		return err
+	}
+
+	if len(tournaments) == 0 {
+		return nil
 	}
 
 	fmt.Println("Fetching participants") // TODO: Replace print with logging
@@ -97,7 +100,7 @@ func (c *Cache) getParticipantsConcurrently(tournaments map[string]string, fetch
 			err                   error
 		}, wg *sync.WaitGroup) {
 			defer wg.Done()
-			participants, err := fetchData.FetchParticipants(context.Background(), tournamentId, tournamentGame)
+			participants, err := fetchData.FetchParticipants(tournamentId, tournamentGame)
 			if err != nil {
 				chanResponse <- struct {
 					tournamentParticipant *models.TournamentParticipants
