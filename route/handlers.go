@@ -3,7 +3,6 @@ package route
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -42,7 +41,6 @@ func GetMatches(fetchData challongebracketmatches.FetchData, cache *cache.Cache)
 			dateStrNotFormattedProperly.JSONError(w)
 			return
 		}
-		fmt.Println("Get Match called", dateStr)
 
 		// Get tournaments and participants
 		var tournamentsAndParticipants []models.TournamentParticipants
