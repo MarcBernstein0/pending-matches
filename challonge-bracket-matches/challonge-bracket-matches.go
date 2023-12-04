@@ -65,8 +65,6 @@ func (c *customClient) FetchTournaments(date string) (map[string]string, error) 
 
 		res, err := c.get(http.MethodGet, c.baseURL+"/tournaments.json", nil, params)
 		if err != nil {
-			// TODO: properly handle error then return
-			fmt.Println(err)
 			return nil, err
 		}
 
@@ -116,8 +114,6 @@ func (c *customClient) FetchParticipants(tournamentId, tournamentGame string) (m
 
 		res, err := c.get(http.MethodGet, c.baseURL+"/tournaments/"+tournamentId+"/participants.json", nil, params)
 		if err != nil {
-			// TODO: properly handle error then return
-			fmt.Println(err)
 			return models.TournamentParticipants{}, err
 		}
 
@@ -130,7 +126,6 @@ func (c *customClient) FetchParticipants(tournamentId, tournamentGame string) (m
 		var participantsChall models.Participants
 		err = json.NewDecoder(res.Body).Decode(&participantsChall)
 		if err != nil {
-			fmt.Println(err)
 			return models.TournamentParticipants{}, fmt.Errorf("%w. %s", err, http.StatusText(http.StatusInternalServerError))
 		}
 
@@ -163,8 +158,6 @@ func (c *customClient) FetchMatches(tournamentParticipants models.TournamentPart
 
 	res, err := c.get(http.MethodGet, c.baseURL+"/tournaments/"+matchResult.TournamentId+"/matches.json", nil, params)
 	if err != nil {
-		// TODO: properly handle error then return
-		fmt.Println("error with the http request", err)
 		return models.TournamentMatches{}, err
 	}
 
@@ -176,7 +169,6 @@ func (c *customClient) FetchMatches(tournamentParticipants models.TournamentPart
 	var matches models.Matches
 	err = json.NewDecoder(res.Body).Decode(&matches)
 	if err != nil {
-		fmt.Println(err)
 		return models.TournamentMatches{}, fmt.Errorf("%w. %s", err, http.StatusText(http.StatusInternalServerError))
 	}
 
@@ -224,7 +216,6 @@ func (c *customClient) get(method, urlPath string, reqBody io.Reader, params map
 
 // Return a map of station id(string) -> station name(string)
 func getStationsMap(matches models.Matches) map[string]string {
-	// fmt.Printf("%+v\n", matches.Included)
 	stationMap := make(map[string]string)
 	for _, includedInfo := range matches.Included {
 		if includedInfo.Type == "station" {
