@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -19,19 +19,21 @@ type Cache struct {
 	updateCacheTimer time.Duration
 	clearCacheTimer  time.Duration
 	lastClearCache   time.Time
+	logger           *slog.Logger
 }
 
-func NewCache(cacheTimer, clearCacheTimer time.Duration) *Cache {
+func NewCache(cacheTimer, clearCacheTimer time.Duration, logger *slog.Logger) *Cache {
 	return &Cache{
 		data:             map[string]cacheData{},
 		updateCacheTimer: cacheTimer,
 		clearCacheTimer:  clearCacheTimer,
 		lastClearCache:   time.Now(),
+		logger:           logger,
 	}
 }
 
 func (c *Cache) UpdateCache(date string, fetchData challongebracketmatches.FetchData) error {
-	fmt.Println("Fetching tournaments") // TODO: Replace print with logging
+	c.logger.Info("Fetching tournaments") // TODO: Replace print with logging
 	tournaments, err := fetchData.FetchTournaments(date)
 	if err != nil {
 		return err
@@ -41,13 +43,13 @@ func (c *Cache) UpdateCache(date string, fetchData challongebracketmatches.Fetch
 		return nil
 	}
 
-	fmt.Println("Fetching participants") // TODO: Replace print with logging
+	c.logger.Info("Fetching participants") // TODO: Replace print with logging
 	listTournamentParticipants, err := c.getParticipantsConcurrently(tournaments, fetchData)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("Cache is updating") // TODO: Replace print with logging
+	c.logger.Info("Cache is updating") // TODO: Replace print with logging
 	c.data[date] = cacheData{
 		tournamentsAndParticipants: listTournamentParticipants,
 		timeStamp:                  time.Now(),
@@ -56,7 +58,7 @@ func (c *Cache) UpdateCache(date string, fetchData challongebracketmatches.Fetch
 }
 
 func (c *Cache) GetData(date string) []models.TournamentParticipants {
-	fmt.Println("Getting data from cache") // TODO: Replace print with logging
+	c.logger.Info("Getting data from cache") // TODO: Replace print with logging
 	return c.data[date].tournamentsAndParticipants
 }
 

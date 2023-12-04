@@ -13,15 +13,34 @@ import (
 	"github.com/MarcBernstein0/pending-matches/route"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/httplog/v2"
 )
 
 func main() {
-	slog.Info("Test slog")
+	logger := httplog.NewLogger("match-display", httplog.Options{
+		// JSON:             true,
+		LogLevel: slog.LevelInfo,
+		Concise:  true,
+		// RequestHeaders:   true,
+		MessageFieldName: "message",
+		// TimeFieldFormat: time.RFC850,
+		Tags: map[string]string{
+			"version": "v1.0-81aa4244d9fc8076a",
+			"env":     "dev",
+		},
+		QuietDownRoutes: []string{
+			"/",
+			"/ping",
+		},
+		QuietDownPeriod: 10 * time.Second,
+		// SourceFieldName: "source",
+	})
+	slog.SetDefault(logger.Logger)
+
 	port, present := os.LookupEnv("PORT")
 	if !present {
 		port = "8080"
 	}
-
 	apiKey, present := os.LookupEnv("API_KEY")
 	if !present {
 		log.Fatalf("api_key not provided in env")
@@ -45,18 +64,23 @@ func main() {
 	}
 
 	customClient := challongebracketmatches.New("https://api.challonge.com/v2.1", apiKey, http.DefaultClient, 20*time.Minute)
-	customCache := cache.NewCache(time.Duration(cacheTimer)*time.Minute, time.Duration(cacheClearTimer)*time.Hour)
+	customCache := cache.NewCache(time.Duration(cacheTimer)*time.Minute, time.Duration(cacheClearTimer)*time.Hour, logger.Logger)
 
+	// chi service
 	r := chi.NewRouter()
-
-	r.Use(middleware.RequestID)
-	r.Use(middleware.Logger)
+	r.Use(httplog.RequestLogger(logger))
 	r.Use(middleware.Recoverer)
-	r.Use(middleware.URLFormat)
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			httplog.LogEntrySetField(ctx, "user", slog.StringValue("user1"))
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	})
 
-	apiRoute := route.RouterSetup(customClient, customCache)
+	api := route.RouterSetup(customClient, customCache)
 
-	r.Mount("/api", apiRoute)
+	r.Mount("/api", api)
 
 	log.Fatal(http.ListenAndServe(":"+port, r))
 }

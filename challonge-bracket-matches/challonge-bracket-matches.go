@@ -199,59 +199,6 @@ func (c *customClient) FetchMatches(tournamentParticipants models.TournamentPart
 		matchResult.MatchList = append(matchResult.MatchList, matchData)
 	}
 	return matchResult, nil
-	// for some reason pagination is not working for matches, no idea why
-	// dealing with paginated responses
-	// paginationLeft := true
-	// pageNumber := 1
-
-	// for paginationLeft {
-	// 	params := map[string]string{
-	// 		"page":     strconv.Itoa(pageNumber),
-	// 		"per_page": "25",
-	// 		"state":    "open",
-	// 	}
-
-	// 	res, err := c.get(ctx, http.MethodGet, c.baseURL+"/tournaments/"+matchResult.TournamentId+"/matches.json", nil, params)
-	// 	if err != nil {
-	// 		// TODO: properly handle error then return
-	// 		fmt.Println(err)
-	// 		return models.TournamentMatches{}, err
-	// 	}
-
-	// 	if res.StatusCode != http.StatusOK {
-	// 		return models.TournamentMatches{}, fmt.Errorf("%w. %s", ErrResponseNotOK, http.StatusText(res.StatusCode))
-	// 	}
-
-	// 	defer res.Body.Close()
-	// 	var matches models.Matches
-	// 	err = json.NewDecoder(res.Body).Decode(&matches)
-	// 	if err != nil {
-	// 		fmt.Println(err)
-	// 		return models.TournamentMatches{}, fmt.Errorf("%w. %s", err, http.StatusText(http.StatusInternalServerError))
-	// 	}
-
-	// 	stations := getStationsMap(matches)
-	// 	fmt.Println("stations", stations)
-	// 	if len(matches.Data) == 0 {
-	// 		paginationLeft = false
-	// 	} else {
-	// 		for _, match := range matches.Data {
-	// 			// fmt.Printf("%+v\n", match)
-	// 			matchData := models.Match{
-	// 				Id:                 match.Id,
-	// 				Player1Name:        tournamentParticipants.Participant[strconv.Itoa(match.Attributes.PointsByParticipant[0].ParticipantId)],
-	// 				Player2Name:        tournamentParticipants.Participant[strconv.Itoa(match.Attributes.PointsByParticipant[1].ParticipantId)],
-	// 				Round:              match.Attributes.Round,
-	// 				SuggestedPlayOrder: match.Attributes.SuggestedPlayOrder,
-	// 				Underway:           match.Attributes.Timestamps.UnderwayAt.IsZero(),
-	// 			}
-	// 			matchResult.MatchList = append(matchResult.MatchList, matchData)
-	// 		}
-	// 		pageNumber++
-	// 	}
-	// }
-
-	// return matchResult, nil
 }
 
 func (c *customClient) get(method, urlPath string, reqBody io.Reader, params map[string]string) (resp *http.Response, err error) {
@@ -280,7 +227,6 @@ func getStationsMap(matches models.Matches) map[string]string {
 	// fmt.Printf("%+v\n", matches.Included)
 	stationMap := make(map[string]string)
 	for _, includedInfo := range matches.Included {
-		fmt.Println("station", includedInfo.Type, includedInfo.Attributes.Name)
 		if includedInfo.Type == "station" {
 			stationMap[includedInfo.Id] = includedInfo.Attributes.Name
 		}

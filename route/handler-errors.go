@@ -3,6 +3,7 @@ package route
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"runtime"
 )
@@ -35,8 +36,8 @@ func ErrorInternal(msg string, err error) StatusError {
 	return newError(msg, err, http.StatusInternalServerError)
 }
 
-func (sc StatusError) LogError() {
-	fmt.Printf("%s\n", sc.ErrLog)
+func (sc StatusError) LogError(logger slog.Logger) {
+	logger.Error(sc.Msg, "error", sc.ErrLog)
 }
 
 func (sc StatusError) JSONError(w http.ResponseWriter) {

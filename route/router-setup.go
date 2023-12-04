@@ -6,14 +6,11 @@ import (
 	challongebracketmatches "github.com/MarcBernstein0/pending-matches/challonge-bracket-matches"
 	"github.com/MarcBernstein0/pending-matches/challonge-bracket-matches/cache"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/httplog/v2"
 )
 
 func RouterSetup(fetchData challongebracketmatches.FetchData, cache *cache.Cache) *chi.Mux {
 	r := chi.NewRouter()
-
-	r.Use(middleware.Logger)
-	r.Use(middleware.Heartbeat("/ping"))
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -24,6 +21,12 @@ func RouterSetup(fetchData challongebracketmatches.FetchData, cache *cache.Cache
 				"status": "UP"
 			}
 			`))
+		})
+		r.Get("/info", func(w http.ResponseWriter, r *http.Request) {
+			logger := httplog.LogEntry(r.Context())
+			w.Header().Add("Content-Type", "text/plain")
+			logger.Warn("info here")
+			w.Write([]byte("info here"))
 		})
 		r.Get("/matches", GetMatches(fetchData, cache))
 	})
