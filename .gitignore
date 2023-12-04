@@ -18,5 +18,8 @@
 # vendor/
 tmp/
 
+# Secret or Env files
+.env
+
 # Go workspace file
 go.work

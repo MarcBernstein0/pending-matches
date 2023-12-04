@@ -1,0 +1,9 @@
+.vscode
+build/
+.env
+.gitignore
+.air.toml
+.env-template
+Dockerfile
+Makefile
+README.md
