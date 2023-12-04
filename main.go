@@ -89,7 +89,7 @@ func main() {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
-	api := route.RouterSetup(customClient, customCache, logger.Logger)
+	api := route.RouterSetup(customClient, customCache)
 
 	r.Mount("/api", api)
 	logger.Info("pending match server started")
