@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"slices"
 	"sync"
 	"time"
 
@@ -59,14 +60,25 @@ func GetMatches(fetchData challongebracketmatches.FetchData, cache *cache.Cache)
 		tournamentsAndParticipants = cache.GetData(dateStr)
 
 		for _, elem := range tournamentsAndParticipants {
-			match, err := fetchData.FetchMatches(elem)
-			if err != nil {
-				getMatchesErr := ErrorInternal("Error in getting match data", err)
-				getMatchesErr.LogError(logger)
-				getMatchesErr.JSONError(w)
-				return
+			// for trial purposes
+			if slices.Contains([]string{"Street Fighter 6", "GUILTY GEAR -STRIVE-"}, elem.GameName) {
+				match, err := fetchData.FetchMatches(elem)
+				if err != nil {
+					getMatchesErr := ErrorInternal("Error in getting match data", err)
+					getMatchesErr.LogError(logger)
+					getMatchesErr.JSONError(w)
+					return
+				}
+				matches = append(matches, match)
 			}
-			matches = append(matches, match)
+			// match, err := fetchData.FetchMatches(elem)
+			// if err != nil {
+			// 	getMatchesErr := ErrorInternal("Error in getting match data", err)
+			// 	getMatchesErr.LogError(logger)
+			// 	getMatchesErr.JSONError(w)
+			// 	return
+			// }
+			// matches = append(matches, match)
 		}
 		// fmt.Println(tournamentsAndParticipants)
 		json.NewEncoder(w).Encode(matches)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strconv"
 	"time"
 
@@ -84,7 +85,12 @@ func (c *customClient) FetchTournaments(date string) (map[string]string, error) 
 			paginationLeft = false
 		} else {
 			for _, tournament := range tournaments.Data {
-				resMap[tournament.Id] = tournament.Attributes.GameName
+				// for trial purposes
+				if slices.Contains([]string{"Street Fighter 6", "GUILTY GEAR -STRIVE-"}, tournament.Attributes.GameName) {
+					resMap[tournament.Id] = tournament.Attributes.GameName
+				}
+				// resMap[tournament.Id] = tournament.Attributes.GameName
+
 			}
 
 			pageNumber++
