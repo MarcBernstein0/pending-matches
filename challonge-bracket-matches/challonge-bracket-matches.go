@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"slices"
+	"sort"
 	"strconv"
 	"time"
 
@@ -196,6 +197,12 @@ func (c *customClient) FetchMatches(tournamentParticipants models.TournamentPart
 		}
 		matchResult.MatchList = append(matchResult.MatchList, matchData)
 	}
+
+	// sort matches based on SuggestedPlayOrder
+	sort.Slice(matchResult.MatchList, func(i, j int) bool {
+		return matchResult.MatchList[i].SuggestedPlayOrder <= matchResult.MatchList[j].SuggestedPlayOrder
+	})
+
 	return matchResult, nil
 }
 
