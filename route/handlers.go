@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"sort"
 	"sync"
 	"time"
 
@@ -117,6 +118,10 @@ func getMatchesConcurrently(tournamentsAndParticipants []models.TournamentPartic
 		}
 		matches = append(matches, *getMatchesResult.tournamentMatches)
 	}
+
+	sort.Slice(matches, func(i, j int) bool {
+		return matches[i].GameName < matches[j].GameName
+	})
 
 	return matches, nil
 }
