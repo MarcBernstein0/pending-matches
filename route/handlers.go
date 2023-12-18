@@ -71,7 +71,7 @@ func GetMatches(fetchData challongebracketmatches.FetchData, cache *cache.Cache)
 }
 
 func getMatchesConcurrently(tournamentsAndParticipants []models.TournamentParticipants, fetchData challongebracketmatches.FetchData) ([]models.TournamentMatches, error) {
-	var matches []models.TournamentMatches
+	matches := []models.TournamentMatches{}
 
 	chanResponse := make(chan struct {
 		tournamentMatches *models.TournamentMatches
