@@ -3,6 +3,7 @@ package route
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"sort"
 	"sync"
@@ -56,6 +57,7 @@ func GetMatches(fetchData challongebracketmatches.FetchData, cache *cache.Cache)
 				return
 			}
 		}
+		fmt.Printf("cache: %+v\n", cache)
 
 		tournamentsAndParticipants = cache.GetData(dateStr)
 
@@ -66,6 +68,7 @@ func GetMatches(fetchData challongebracketmatches.FetchData, cache *cache.Cache)
 			getMatchesErr.JSONError(w)
 			return
 		}
+		fmt.Printf("matches: %+v\n", matches)
 
 		json.NewEncoder(w).Encode(matches)
 	}
