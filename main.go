@@ -91,7 +91,7 @@ func main() {
 
 	api := route.RouterSetup(customClient, customCache)
 
-	r.Mount("/api", api)
+	r.Mount("/", api)
 	logger.Info("pending match server started")
 	log.Fatal(http.ListenAndServe(":"+port, r))
 }

@@ -11,16 +11,16 @@ import (
 func RouterSetup(fetchData challongebracketmatches.FetchData, cache *cache.Cache) *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Route("/v1", func(r chi.Router) {
-		r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`
-			{
-				"status": "UP"
-			}
-			`))
-		})
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`
+		{
+			"status": "UP"
+		}
+		`))
+	})
+	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/matches", GetMatches(fetchData, cache))
 	})
 
