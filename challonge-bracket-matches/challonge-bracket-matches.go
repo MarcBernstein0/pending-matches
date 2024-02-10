@@ -87,7 +87,7 @@ func (c *customClient) FetchTournaments(date string) (map[string]string, error) 
 		} else {
 			for _, tournament := range tournaments.Data {
 				// for trial purposes
-				if slices.Contains([]string{"Street Fighter 6", "Tekken 8"}, tournament.Attributes.GameName) {
+				if slices.Contains([]string{"Street Fighter 6", "Tekken 8", "Under Night In-Birth"}, tournament.Attributes.GameName) {
 					resMap[tournament.Id] = tournament.Attributes.GameName
 				}
 				// resMap[tournament.Id] = tournament.Attributes.GameName
