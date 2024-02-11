@@ -3,9 +3,9 @@ package route
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -29,7 +29,9 @@ func GetMatches(fetchData challongebracketmatches.FetchData, cache *cache.Cache)
 
 		matches := make([]models.TournamentMatches, 0)
 
-		dateStr := r.URL.Query().Get("date")
+		queryValues := r.URL.Query()
+
+		dateStr := queryValues.Get("date")
 		if dateStr == "" {
 			dateErr := errors.New("date query parameter not provided")
 			noDateProvidedErr := ErrorBadRequest(dateErr.Error(), dateErr)
@@ -42,6 +44,12 @@ func GetMatches(fetchData challongebracketmatches.FetchData, cache *cache.Cache)
 			dateStrNotFormattedProperly.LogError(logger)
 			dateStrNotFormattedProperly.JSONError(w)
 			return
+		}
+
+		gamesListStr := queryValues.Get("games")
+		var gamesList []string
+		if gamesListStr != "" {
+			gamesList = strings.Split(gamesListStr, ",")
 		}
 
 		// Get tournaments and participants
@@ -57,9 +65,8 @@ func GetMatches(fetchData challongebracketmatches.FetchData, cache *cache.Cache)
 				return
 			}
 		}
-		fmt.Printf("cache: %+v\n", cache)
 
-		tournamentsAndParticipants = cache.GetData(dateStr)
+		tournamentsAndParticipants = cache.GetData(dateStr, gamesList)
 
 		matches, err := getMatchesConcurrently(tournamentsAndParticipants, fetchData)
 		if err != nil {
@@ -68,7 +75,6 @@ func GetMatches(fetchData challongebracketmatches.FetchData, cache *cache.Cache)
 			getMatchesErr.JSONError(w)
 			return
 		}
-		fmt.Printf("matches: %+v\n", matches)
 
 		json.NewEncoder(w).Encode(matches)
 	}
