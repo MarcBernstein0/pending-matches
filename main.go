@@ -42,7 +42,7 @@ func main() {
 	if !present {
 		port = "8080"
 	}
-	apiKey, present := os.LookupEnv("API_KEY")
+	apiKey, present := os.LookupEnv("SNS_API_KEY")
 	if !present {
 		log.Fatalf("api_key not provided in env")
 	}
