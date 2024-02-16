@@ -183,7 +183,7 @@ func TestUpdateCache(t *testing.T) {
 			if tc.wantErr != nil {
 				assert.EqualError(t, gotErr, tc.wantErr.Error())
 			} else {
-				assert.ElementsMatch(t, tc.wantData, mockCache.GetData(tc.date))
+				assert.ElementsMatch(t, tc.wantData, mockCache.GetData(tc.date, []string{}))
 				assert.NoError(t, gotErr)
 			}
 		})
