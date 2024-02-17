@@ -23,7 +23,9 @@ type (
 	customClient struct {
 		baseURL string
 		client  *http.Client
-		apiKey  string
+		// apiKeyTravCntlr string
+		// apiKeySNS       string
+		apiKey string
 	}
 
 	FetchData interface {
@@ -38,6 +40,15 @@ type (
 		FetchMatches(tournamentParticipants models.TournamentParticipants) (models.TournamentMatches, error)
 	}
 )
+
+// func New(baseURL, apiKeyTravCntlr, apiKeySNS string, client *http.Client, contextTimeout time.Duration) *customClient {
+// 	return &customClient{
+// 		baseURL:         baseURL,
+// 		client:          client,
+// 		apiKeyTravCntlr: apiKeyTravCntlr,
+// 		apiKeySNS:       apiKeySNS,
+// 	}
+// }
 
 func New(baseURL, apiKey string, client *http.Client, contextTimeout time.Duration) *customClient {
 	return &customClient{
