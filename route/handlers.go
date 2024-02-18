@@ -37,7 +37,7 @@ func GetMatches(fetchData challongebracketmatches.FetchData, cache *cache.Cache)
 		// check if cache is empty or time limit has been exceeded
 		if cache.IsCacheEmptyAtDate(requestValues.Date) || cache.ShouldUpdate(requestValues.Date) {
 			// update cache
-			err := cache.UpdateCache(requestValues, fetchData)
+			err := cache.UpdateCache(requestValues.Date, fetchData)
 			if err != nil {
 				cacheUpdateError := ErrorInternal("Error in getting tournament data", err)
 				cacheUpdateError.LogError(logger)

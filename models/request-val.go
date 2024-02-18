@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"strings"
 	"time"
@@ -13,18 +14,16 @@ const (
 )
 
 var (
-	ErrorDateNotProvided          = errors.New("date query parameter not provided")
-	ErrorDateIncorrectFormat      = errors.New("incorrect date format")
-	ErrorTournamentOrgNotProvided = errors.New("no tournament organizer provided")
+	ErrorDateNotProvided     = errors.New("date query parameter not provided")
+	ErrorDateIncorrectFormat = errors.New("incorrect date format")
 )
 
 type (
 	TournamentOrganizer int
 
 	RequestValues struct {
-		Date          string
-		GameList      []string
-		TournamentOrg TournamentOrganizer
+		Date     string
+		GameList []string
 	}
 )
 
@@ -38,12 +37,8 @@ func CreateRequestValues(urlValues url.Values) (RequestValues, error) {
 		return RequestValues{}, ErrorDateIncorrectFormat
 	}
 
-	tournamentOrg := urlValues.Get("tournamentOrg")
-	if tournamentOrg == "" {
-		return RequestValues{}, ErrorTournamentOrgNotProvided
-	}
-
 	gamesListStr := urlValues.Get("games")
+	fmt.Println("gamesList", gamesListStr)
 	var gamesList []string
 	if gamesListStr != "" {
 		gamesList = strings.Split(gamesListStr, ",")
@@ -52,11 +47,5 @@ func CreateRequestValues(urlValues url.Values) (RequestValues, error) {
 	return RequestValues{
 		Date:     dateStr,
 		GameList: gamesList,
-		TournamentOrg: func(tournamentOrg string) TournamentOrganizer {
-			if tournamentOrg == "sns" {
-				return SNS
-			}
-			return TRAVELING_CONTROLLER
-		}(tournamentOrg),
 	}, nil
 }

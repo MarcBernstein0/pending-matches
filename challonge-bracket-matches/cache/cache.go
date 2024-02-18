@@ -16,7 +16,7 @@ type cacheData struct {
 }
 
 type Cache struct {
-	data             map[models.TournamentOrganizer]map[string]cacheData
+	data             map[string]cacheData
 	updateCacheTimer time.Duration
 	clearCacheTimer  time.Duration
 	lastClearCache   time.Time
@@ -25,7 +25,7 @@ type Cache struct {
 
 func NewCache(cacheTimer, clearCacheTimer time.Duration, logger *slog.Logger) *Cache {
 	return &Cache{
-		data:             make(map[models.TournamentOrganizer]map[string]cacheData),
+		data:             map[string]cacheData{},
 		updateCacheTimer: cacheTimer,
 		clearCacheTimer:  clearCacheTimer,
 		lastClearCache:   time.Now(),
@@ -33,9 +33,9 @@ func NewCache(cacheTimer, clearCacheTimer time.Duration, logger *slog.Logger) *C
 	}
 }
 
-func (c *Cache) UpdateCache(requestValues models.RequestValues, fetchData challongebracketmatches.FetchData) error {
-	c.logger.Info("Fetching tournaments")
-	tournaments, err := fetchData.FetchTournaments(requestValues.Date)
+func (c *Cache) UpdateCache(date string, fetchData challongebracketmatches.FetchData) error {
+	c.logger.Info("Fetching tournaments") // TODO: Replace print with logging
+	tournaments, err := fetchData.FetchTournaments(date)
 	if err != nil {
 		return err
 	}
@@ -44,28 +44,28 @@ func (c *Cache) UpdateCache(requestValues models.RequestValues, fetchData challo
 		return nil
 	}
 
-	c.logger.Info("Fetching participants")
+	c.logger.Info("Fetching participants") // TODO: Replace print with logging
 	listTournamentParticipants, err := c.getParticipantsConcurrently(tournaments, fetchData)
 	if err != nil {
 		return err
 	}
 
-	c.logger.Info("Cache is updating")
-	c.data[requestValues.TournamentOrg][requestValues.Date] = cacheData{
+	c.logger.Info("Cache is updating") // TODO: Replace print with logging
+	c.data[date] = cacheData{
 		tournamentsAndParticipants: listTournamentParticipants,
 		timeStamp:                  time.Now(),
 	}
 	return nil
 }
 
-func (c *Cache) GetData(requestValues models.RequestValues, gamesList []string) []models.TournamentParticipants {
+func (c *Cache) GetData(date string, gamesList []string) []models.TournamentParticipants {
 	c.logger.Info("Getting data from cache")
 	if len(gamesList) == 0 {
-		return c.data[requestValues.TournamentOrg][requestValues.Date].tournamentsAndParticipants
+		return c.data[date].tournamentsAndParticipants
 	}
 
 	ret := []models.TournamentParticipants{}
-	for _, tournament := range c.data[requestValues.TournamentOrg][requestValues.Date].tournamentsAndParticipants {
+	for _, tournament := range c.data[date].tournamentsAndParticipants {
 		if slices.Contains(gamesList, tournament.GameName) {
 			ret = append(ret, tournament)
 		}
@@ -73,16 +73,16 @@ func (c *Cache) GetData(requestValues models.RequestValues, gamesList []string) 
 	return ret
 }
 
-func (c *Cache) ShouldUpdate(requestValues models.RequestValues) bool {
-	if data, ok := c.data[requestValues.TournamentOrg][requestValues.Date]; ok {
+func (c *Cache) ShouldUpdate(date string) bool {
+	if data, ok := c.data[date]; ok {
 		timeSince := time.Since(data.timeStamp)
 		return timeSince >= c.updateCacheTimer
 	}
 	return true
 }
 
-func (c *Cache) IsCacheEmptyAtDate(requestValues models.RequestValues) bool {
-	if data, ok := c.data[requestValues.TournamentOrg][requestValues.Date]; ok {
+func (c *Cache) IsCacheEmptyAtDate(date string) bool {
+	if data, ok := c.data[date]; ok {
 		return len(data.tournamentsAndParticipants) == 0
 	}
 	return true
@@ -94,7 +94,7 @@ func (c *Cache) ShouldClearCacheData() bool {
 }
 
 func (c *Cache) ClearCache() {
-	c.data = map[models.TournamentOrganizer]map[string]cacheData{}
+	c.data = map[string]cacheData{}
 	c.lastClearCache = time.Now()
 }
 

@@ -18,22 +18,19 @@ func TestCreateRequestVal(t *testing.T) {
 		{
 			testName: "no errors",
 			mockData: url.Values{
-				"date":          []string{"2006-01-02"},
-				"tournamentOrg": []string{"traveling_controller"},
-				"games":         []string{"game1,game2,game3"},
+				"date":  []string{"2006-01-02"},
+				"games": []string{"game1,game2,game3"},
 			},
 			wantData: RequestValues{
-				Date:          "2006-01-02",
-				TournamentOrg: TRAVELING_CONTROLLER,
-				GameList:      []string{"game1", "game2", "game3"},
+				Date:     "2006-01-02",
+				GameList: []string{"game1", "game2", "game3"},
 			},
 			wantErr: nil,
 		},
 		{
 			testName: "no date provided",
 			mockData: url.Values{
-				"tournamentOrg": []string{"traveling_controller"},
-				"games":         []string{"game1,game2,game3"},
+				"games": []string{"game1,game2,game3"},
 			},
 			wantData: RequestValues{},
 			wantErr:  ErrorDateNotProvided,
@@ -41,21 +38,11 @@ func TestCreateRequestVal(t *testing.T) {
 		{
 			testName: "date not formatted correctly",
 			mockData: url.Values{
-				"date":          []string{"06-01-02"},
-				"tournamentOrg": []string{"traveling_controller"},
-				"games":         []string{"game1,game2,game3"},
-			},
-			wantData: RequestValues{},
-			wantErr:  ErrorDateIncorrectFormat,
-		},
-		{
-			testName: "tournament org not provided",
-			mockData: url.Values{
-				"date":  []string{"2006-01-02"},
+				"date":  []string{"06-01-02"},
 				"games": []string{"game1,game2,game3"},
 			},
 			wantData: RequestValues{},
-			wantErr:  ErrorTournamentOrgNotProvided,
+			wantErr:  ErrorDateIncorrectFormat,
 		},
 	}
 
