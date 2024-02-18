@@ -33,9 +33,9 @@ func NewCache(cacheTimer, clearCacheTimer time.Duration, logger *slog.Logger) *C
 	}
 }
 
-func (c *Cache) UpdateCache(date string, fetchData challongebracketmatches.FetchData) error {
-	c.logger.Info("Fetching tournaments") // TODO: Replace print with logging
-	tournaments, err := fetchData.FetchTournaments(date)
+func (c *Cache) UpdateCache(requestValues models.RequestValues, fetchData challongebracketmatches.FetchData) error {
+	c.logger.Info("Fetching tournaments")
+	tournaments, err := fetchData.FetchTournaments(requestValues.Date)
 	if err != nil {
 		return err
 	}
@@ -44,14 +44,14 @@ func (c *Cache) UpdateCache(date string, fetchData challongebracketmatches.Fetch
 		return nil
 	}
 
-	c.logger.Info("Fetching participants") // TODO: Replace print with logging
+	c.logger.Info("Fetching participants")
 	listTournamentParticipants, err := c.getParticipantsConcurrently(tournaments, fetchData)
 	if err != nil {
 		return err
 	}
 
-	c.logger.Info("Cache is updating") // TODO: Replace print with logging
-	c.data[date] = cacheData{
+	c.logger.Info("Cache is updating")
+	c.data[requestValues.Date] = cacheData{
 		tournamentsAndParticipants: listTournamentParticipants,
 		timeStamp:                  time.Now(),
 	}

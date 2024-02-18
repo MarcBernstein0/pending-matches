@@ -2,12 +2,9 @@ package route
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"sort"
-	"strings"
 	"sync"
-	"time"
 
 	challongebracketmatches "github.com/MarcBernstein0/pending-matches/challonge-bracket-matches"
 	"github.com/MarcBernstein0/pending-matches/challonge-bracket-matches/cache"
@@ -27,37 +24,20 @@ func GetMatches(fetchData challongebracketmatches.FetchData, cache *cache.Cache)
 			cache.ClearCache()
 		}
 
-		matches := make([]models.TournamentMatches, 0)
-
-		queryValues := r.URL.Query()
-
-		dateStr := queryValues.Get("date")
-		if dateStr == "" {
-			dateErr := errors.New("date query parameter not provided")
-			noDateProvidedErr := ErrorBadRequest(dateErr.Error(), dateErr)
-			noDateProvidedErr.LogError(logger)
-			noDateProvidedErr.JSONError(w)
+		requestValues, err := models.CreateRequestValues(r.URL.Query())
+		if err != nil {
+			requestQueryParamErr := ErrorBadRequest(err.Error(), err)
+			requestQueryParamErr.LogError(logger)
+			requestQueryParamErr.JSONError(w)
 			return
-		}
-		if _, err := time.Parse("2006-01-02", dateStr); err != nil {
-			dateStrNotFormattedProperly := ErrorBadRequest("Date query parameter not formatted properly. Expect formatting YYYY-MM-DD", err)
-			dateStrNotFormattedProperly.LogError(logger)
-			dateStrNotFormattedProperly.JSONError(w)
-			return
-		}
-
-		gamesListStr := queryValues.Get("games")
-		var gamesList []string
-		if gamesListStr != "" {
-			gamesList = strings.Split(gamesListStr, ",")
 		}
 
 		// Get tournaments and participants
 		var tournamentsAndParticipants []models.TournamentParticipants
 		// check if cache is empty or time limit has been exceeded
-		if cache.IsCacheEmptyAtDate(dateStr) || cache.ShouldUpdate(dateStr) {
+		if cache.IsCacheEmptyAtDate(requestValues.Date) || cache.ShouldUpdate(requestValues.Date) {
 			// update cache
-			err := cache.UpdateCache(dateStr, fetchData)
+			err := cache.UpdateCache(requestValues, fetchData)
 			if err != nil {
 				cacheUpdateError := ErrorInternal("Error in getting tournament data", err)
 				cacheUpdateError.LogError(logger)
@@ -66,7 +46,7 @@ func GetMatches(fetchData challongebracketmatches.FetchData, cache *cache.Cache)
 			}
 		}
 
-		tournamentsAndParticipants = cache.GetData(dateStr, gamesList)
+		tournamentsAndParticipants = cache.GetData(requestValues.Date, requestValues.GameList)
 
 		matches, err := getMatchesConcurrently(tournamentsAndParticipants, fetchData)
 		if err != nil {

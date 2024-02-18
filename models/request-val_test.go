@@ -1,4 +1,4 @@
-package route
+package models
 
 import (
 	"net/url"
