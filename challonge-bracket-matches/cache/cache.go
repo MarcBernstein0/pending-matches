@@ -2,6 +2,7 @@ package cache
 
 import (
 	"log/slog"
+	"slices"
 	"sync"
 	"time"
 
@@ -57,9 +58,19 @@ func (c *Cache) UpdateCache(date string, fetchData challongebracketmatches.Fetch
 	return nil
 }
 
-func (c *Cache) GetData(date string) []models.TournamentParticipants {
-	c.logger.Info("Getting data from cache") // TODO: Replace print with logging
-	return c.data[date].tournamentsAndParticipants
+func (c *Cache) GetData(date string, gamesList []string) []models.TournamentParticipants {
+	c.logger.Info("Getting data from cache")
+	if len(gamesList) == 0 {
+		return c.data[date].tournamentsAndParticipants
+	}
+
+	ret := []models.TournamentParticipants{}
+	for _, tournament := range c.data[date].tournamentsAndParticipants {
+		if slices.Contains(gamesList, tournament.GameName) {
+			ret = append(ret, tournament)
+		}
+	}
+	return ret
 }
 
 func (c *Cache) ShouldUpdate(date string) bool {

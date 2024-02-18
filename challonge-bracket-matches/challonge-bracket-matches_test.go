@@ -457,7 +457,6 @@ func mockFetchParticipantEndpoint(w http.ResponseWriter, r *http.Request) {
 		w.Write(byteValue)
 	}
 	if strings.Contains(r.URL.Path, "112358") {
-		// fmt.Println("multi-page-print")
 		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 		if page >= 3 {
 			w.Write(emptyReturn)
@@ -494,7 +493,6 @@ func mockFetchMatchesEndpoint(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		byteValue, _ := readJsonFile("./mock-api-responses/mock-matches-response.json")
-		// fmt.Println(string(byteValue))
 		w.Write(byteValue)
 	}
 }

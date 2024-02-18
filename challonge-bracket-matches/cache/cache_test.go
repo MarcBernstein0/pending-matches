@@ -71,29 +71,38 @@ func TestUpdateCache(t *testing.T) {
 	mockCache := NewCache(5*time.Minute, 5*time.Hour, slog.Default())
 	// Given
 	tt := []struct {
-		name          string
-		date          string
-		mockFetchData challongebracketmatches.FetchData
-		wantData      []models.TournamentParticipants
-		wantErr       error
+		name              string
+		mockRequestValues models.RequestValues
+		mockFetchData     challongebracketmatches.FetchData
+		wantData          []models.TournamentParticipants
+		wantErr           error
 	}{
 		{
-			name:          "response not ok",
-			date:          "2022-07-16",
+			name: "response not ok",
+			mockRequestValues: models.RequestValues{
+				Date:     "2022-07-16",
+				GameList: []string{},
+			},
 			mockFetchData: challongebracketmatches.New(server.URL, "bad api key", http.DefaultClient, 5*time.Second),
 			wantData:      nil,
 			wantErr:       fmt.Errorf("%w. %s", challongebracketmatches.ErrResponseNotOK, http.StatusText(http.StatusUnauthorized)),
 		},
 		{
-			name:          "response not ok but no tournaments",
-			date:          "2022-07-16",
+			name: "response not ok but no tournaments",
+			mockRequestValues: models.RequestValues{
+				Date:     "2022-07-16",
+				GameList: []string{},
+			},
 			mockFetchData: challongebracketmatches.New(server.URL, MOCK_API_KEY, http.DefaultClient, 5*time.Second),
 			wantData:      []models.TournamentParticipants{},
 			wantErr:       nil,
 		},
 		{
-			name:          "response ok",
-			date:          "2023-11-25",
+			name: "response ok",
+			mockRequestValues: models.RequestValues{
+				Date:     "2023-11-25",
+				GameList: []string{},
+			},
 			mockFetchData: challongebracketmatches.New(server.URL, MOCK_API_KEY, http.DefaultClient, 5*time.Second),
 			wantData: []models.TournamentParticipants{
 				{
@@ -178,12 +187,12 @@ func TestUpdateCache(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			// When
-			gotErr := mockCache.UpdateCache(tc.date, tc.mockFetchData)
+			gotErr := mockCache.UpdateCache(tc.mockRequestValues.Date, tc.mockFetchData)
 			// Then
 			if tc.wantErr != nil {
 				assert.EqualError(t, gotErr, tc.wantErr.Error())
 			} else {
-				assert.ElementsMatch(t, tc.wantData, mockCache.GetData(tc.date))
+				assert.ElementsMatch(t, tc.wantData, mockCache.GetData(tc.mockRequestValues.Date, tc.mockRequestValues.GameList))
 				assert.NoError(t, gotErr)
 			}
 		})
@@ -446,47 +455,3 @@ func mockFetchParticipantsEndpoint(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
-
-// func TestShouldUpdate(t *testing.T) {
-// 	t.Run("Test that method returns true when timer has exceeded limit", func(t *testing.T) {
-// 		// Given
-// 		mockCache := NewCache(2*time.Microsecond, 2*time.Microsecond)
-// 		mockCache.UpdateCache([]models.TournamentParticipants{
-// 			{
-// 				GameName:     "Guilty Gear -Strive-",
-// 				TournamentID: 10879090,
-// 				Participant: map[int]string{
-// 					166014671: "test",
-// 					166014672: "test2",
-// 					166014673: "test3",
-// 					166014674: "test4",
-// 				},
-// 			},
-// 		}, "2006-01-02")
-// 		// When
-// 		time.Sleep(5 * time.Millisecond)
-// 		// Then
-// 		assert.Equal(t, true, mockCache.ShouldUpdate("2006-01-02"))
-// 	})
-
-// 	t.Run("Test that method returns false when timer has note exceeded limit", func(t *testing.T) {
-// 		// Given
-// 		mockCache := NewCache(5*time.Millisecond, 5*time.Millisecond)
-// 		mockCache.UpdateCache([]models.TournamentParticipants{
-// 			{
-// 				GameName:     "Guilty Gear -Strive-",
-// 				TournamentID: 10879090,
-// 				Participant: map[int]string{
-// 					166014671: "test",
-// 					166014672: "test2",
-// 					166014673: "test3",
-// 					166014674: "test4",
-// 				},
-// 			},
-// 		}, "2006-01-02")
-// 		// When
-// 		time.Sleep(2 * time.Microsecond)
-// 		// Then
-// 		assert.Equal(t, false, mockCache.ShouldUpdate("2006-01-02"))
-// 	})
-// }

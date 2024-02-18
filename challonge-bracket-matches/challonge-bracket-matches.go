@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"slices"
 	"sort"
 	"strconv"
 	"time"
@@ -24,7 +23,9 @@ type (
 	customClient struct {
 		baseURL string
 		client  *http.Client
-		apiKey  string
+		// apiKeyTravCntlr string
+		// apiKeySNS       string
+		apiKey string
 	}
 
 	FetchData interface {
@@ -39,6 +40,15 @@ type (
 		FetchMatches(tournamentParticipants models.TournamentParticipants) (models.TournamentMatches, error)
 	}
 )
+
+// func New(baseURL, apiKeyTravCntlr, apiKeySNS string, client *http.Client, contextTimeout time.Duration) *customClient {
+// 	return &customClient{
+// 		baseURL:         baseURL,
+// 		client:          client,
+// 		apiKeyTravCntlr: apiKeyTravCntlr,
+// 		apiKeySNS:       apiKeySNS,
+// 	}
+// }
 
 func New(baseURL, apiKey string, client *http.Client, contextTimeout time.Duration) *customClient {
 	return &customClient{
@@ -86,11 +96,7 @@ func (c *customClient) FetchTournaments(date string) (map[string]string, error) 
 			paginationLeft = false
 		} else {
 			for _, tournament := range tournaments.Data {
-				// for trial purposes
-				if slices.Contains([]string{"Street Fighter 6", "Tekken 8", "Under Night In-Birth"}, tournament.Attributes.GameName) {
-					resMap[tournament.Id] = tournament.Attributes.GameName
-				}
-				// resMap[tournament.Id] = tournament.Attributes.GameName
+				resMap[tournament.Id] = tournament.Attributes.GameName
 
 			}
 
