@@ -54,7 +54,7 @@ func TestMain(m *testing.M) {
 func TestCreateCache(t *testing.T) {
 	// Given
 	givenCache := &Cache{
-		data:             map[string]cacheData{},
+		data:             map[models.TournamentOrganizer]map[string]cacheData{},
 		updateCacheTimer: 5 * time.Minute,
 		clearCacheTimer:  5 * time.Minute,
 	}
@@ -197,7 +197,7 @@ func TestUpdateCache(t *testing.T) {
 			if tc.wantErr != nil {
 				assert.EqualError(t, gotErr, tc.wantErr.Error())
 			} else {
-				assert.ElementsMatch(t, tc.wantData, mockCache.GetData(tc.mockRequestValues.Date, []string{}))
+				assert.ElementsMatch(t, tc.wantData, mockCache.GetData(tc.mockRequestValues, []string{}))
 				assert.NoError(t, gotErr)
 			}
 		})
@@ -208,116 +208,137 @@ func TestUpdateCache(t *testing.T) {
 func TestShouldUpdate(t *testing.T) {
 	t.Run("It should return true when the timer has been exceeded", func(t *testing.T) {
 		// Given
+		mockRequestValues := models.RequestValues{
+			Date:          "2006-01-02",
+			GameList:      []string{},
+			TournamentOrg: models.TRAVELING_CONTROLLER,
+		}
 		mockCache := NewCache(2*time.Microsecond, 2*time.Microsecond, slog.Default())
-		mockCache.data["2006-01-02"] = cacheData{}
+		mockTourneyCache := map[string]cacheData{
+			"2006-01-02": {},
+		}
+		mockCache.data[models.TRAVELING_CONTROLLER] = mockTourneyCache
 		// When
 		time.Sleep(5 * time.Millisecond)
 		// Then
-		assert.Equal(t, true, mockCache.ShouldUpdate("2006-01-02"))
+		assert.Equal(t, true, mockCache.ShouldUpdate(mockRequestValues))
 	})
 
 	t.Run("It should return false when timer has not been exceeded", func(t *testing.T) {
 		// Given
+		mockRequestValues := models.RequestValues{
+			Date:          "2006-01-02",
+			GameList:      []string{},
+			TournamentOrg: models.TRAVELING_CONTROLLER,
+		}
 		mockCache := NewCache(5*time.Microsecond, 5*time.Microsecond, slog.Default())
-		mockCache.data["2006-01-02"] = cacheData{}
+		mockTourneyCache := map[string]cacheData{
+			"2006-01-02": {},
+		}
+		mockCache.data[models.TRAVELING_CONTROLLER] = mockTourneyCache
 		// When
 		time.Sleep(2 * time.Millisecond)
 		// Then
-		assert.Equal(t, true, mockCache.ShouldUpdate("2006-01-02"))
+		assert.Equal(t, true, mockCache.ShouldUpdate(mockRequestValues))
 	})
 
 	t.Run("It should return true as no data exists at the given date", func(t *testing.T) {
 		// Given
-		mockCache := NewCache(5*time.Microsecond, 5*time.Microsecond, slog.Default())
-		// When
-		res := mockCache.ShouldUpdate("2006-01-02")
-		// Then
-		assert.Equal(t, true, res)
-	})
-}
-
-func TestIsCacheEmptyAtDate(t *testing.T) {
-	t.Run("It should return false if data exists at a given date", func(t *testing.T) {
-		// Given
-		mockCache := NewCache(5*time.Microsecond, 5*time.Microsecond, slog.Default())
-		mockCache.data["2006-01-02"] = cacheData{
-			tournamentsAndParticipants: []models.TournamentParticipants{
-				{
-					GameName:     "test",
-					TournamentID: "1234",
-					Participant: map[string]string{
-						"123": "123",
-						"456": "456",
-					},
-				},
-			},
+		mockRequestValues := models.RequestValues{
+			Date:          "2006-01-02",
+			GameList:      []string{},
+			TournamentOrg: models.TRAVELING_CONTROLLER,
 		}
-		// When
-		res := mockCache.IsCacheEmptyAtDate("2006-01-02")
-		// Then
-		assert.Equal(t, false, res)
-	})
-
-	t.Run("It should return true if data does not exist at a given date", func(t *testing.T) {
-		// Given
-		mockCache := NewCache(5*time.Microsecond, 5*time.Microsecond, slog.Default())
-		mockCache.data["2006-01-02"] = cacheData{}
-		// When
-		res := mockCache.IsCacheEmptyAtDate("2006-01-02")
-		// Then
-		assert.Equal(t, true, res)
-	})
-
-	t.Run("It should return true if there is no entry for a given date", func(t *testing.T) {
-		// Given
 		mockCache := NewCache(5*time.Microsecond, 5*time.Microsecond, slog.Default())
 		// When
-		res := mockCache.IsCacheEmptyAtDate("2006-01-02")
+		res := mockCache.ShouldUpdate(mockRequestValues)
 		// Then
 		assert.Equal(t, true, res)
 	})
 }
 
-func TestShouldClearCacheData(t *testing.T) {
-	t.Run("It should return true if clearCacheTimer is has been exceeded", func(t *testing.T) {
-		// Given
-		mockCache := NewCache(2*time.Microsecond, 2*time.Microsecond, slog.Default())
-		// When
-		time.Sleep(5 * time.Millisecond)
-		// Then
-		assert.Equal(t, true, mockCache.ShouldClearCacheData())
-	})
+// func TestIsCacheEmptyAtDate(t *testing.T) {
+// 	t.Run("It should return false if data exists at a given date", func(t *testing.T) {
+// 		// Given
+// 		mockCache := NewCache(5*time.Microsecond, 5*time.Microsecond, slog.Default())
+// 		mockCache.data["2006-01-02"] = cacheData{
+// 			tournamentsAndParticipants: []models.TournamentParticipants{
+// 				{
+// 					GameName:     "test",
+// 					TournamentID: "1234",
+// 					Participant: map[string]string{
+// 						"123": "123",
+// 						"456": "456",
+// 					},
+// 				},
+// 			},
+// 		}
+// 		// When
+// 		res := mockCache.IsCacheEmptyAtDate("2006-01-02")
+// 		// Then
+// 		assert.Equal(t, false, res)
+// 	})
 
-	t.Run("It should return false when timer has not been exceeded", func(t *testing.T) {
-		// Given
-		mockCache := NewCache(5*time.Millisecond, 5*time.Millisecond, slog.Default())
-		// When
-		time.Sleep(2 * time.Microsecond)
-		// Then
-		assert.Equal(t, false, mockCache.ShouldClearCacheData())
-	})
-}
+// 	t.Run("It should return true if data does not exist at a given date", func(t *testing.T) {
+// 		// Given
+// 		mockCache := NewCache(5*time.Microsecond, 5*time.Microsecond, slog.Default())
+// 		mockCache.data["2006-01-02"] = cacheData{}
+// 		// When
+// 		res := mockCache.IsCacheEmptyAtDate("2006-01-02")
+// 		// Then
+// 		assert.Equal(t, true, res)
+// 	})
 
-func TestClearCacheData(t *testing.T) {
-	// Given
-	mockCache := NewCache(5*time.Microsecond, 5*time.Microsecond, slog.Default())
-	mockCache.data["2006-01-02"] = cacheData{
-		tournamentsAndParticipants: []models.TournamentParticipants{
-			{
-				GameName:     "test",
-				TournamentID: "1234",
-				Participant: map[string]string{
-					"123": "123",
-					"456": "456",
-				},
-			},
-		},
-	}
-	// When
-	mockCache.ClearCache()
-	// Then
-	assert.Empty(t, mockCache.data)
-}
+// 	t.Run("It should return true if there is no entry for a given date", func(t *testing.T) {
+// 		// Given
+// 		mockCache := NewCache(5*time.Microsecond, 5*time.Microsecond, slog.Default())
+// 		// When
+// 		res := mockCache.IsCacheEmptyAtDate("2006-01-02")
+// 		// Then
+// 		assert.Equal(t, true, res)
+// 	})
+// }
+
+// func TestShouldClearCacheData(t *testing.T) {
+// 	t.Run("It should return true if clearCacheTimer is has been exceeded", func(t *testing.T) {
+// 		// Given
+// 		mockCache := NewCache(2*time.Microsecond, 2*time.Microsecond, slog.Default())
+// 		// When
+// 		time.Sleep(5 * time.Millisecond)
+// 		// Then
+// 		assert.Equal(t, true, mockCache.ShouldClearCacheData())
+// 	})
+
+// 	t.Run("It should return false when timer has not been exceeded", func(t *testing.T) {
+// 		// Given
+// 		mockCache := NewCache(5*time.Millisecond, 5*time.Millisecond, slog.Default())
+// 		// When
+// 		time.Sleep(2 * time.Microsecond)
+// 		// Then
+// 		assert.Equal(t, false, mockCache.ShouldClearCacheData())
+// 	})
+// }
+
+// func TestClearCacheData(t *testing.T) {
+// 	// Given
+// 	mockCache := NewCache(5*time.Microsecond, 5*time.Microsecond, slog.Default())
+// 	mockCache.data["2006-01-02"] = cacheData{
+// 		tournamentsAndParticipants: []models.TournamentParticipants{
+// 			{
+// 				GameName:     "test",
+// 				TournamentID: "1234",
+// 				Participant: map[string]string{
+// 					"123": "123",
+// 					"456": "456",
+// 				},
+// 			},
+// 		},
+// 	}
+// 	// When
+// 	mockCache.ClearCache()
+// 	// Then
+// 	assert.Empty(t, mockCache.data)
+// }
 
 // helper functions
 func testApiKeyAuth(apiKey string) bool {

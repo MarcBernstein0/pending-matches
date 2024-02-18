@@ -16,7 +16,7 @@ type cacheData struct {
 }
 
 type Cache struct {
-	data             map[string]cacheData
+	data             map[models.TournamentOrganizer]map[string]cacheData
 	updateCacheTimer time.Duration
 	clearCacheTimer  time.Duration
 	lastClearCache   time.Time
@@ -25,7 +25,7 @@ type Cache struct {
 
 func NewCache(cacheTimer, clearCacheTimer time.Duration, logger *slog.Logger) *Cache {
 	return &Cache{
-		data:             map[string]cacheData{},
+		data:             make(map[models.TournamentOrganizer]map[string]cacheData),
 		updateCacheTimer: cacheTimer,
 		clearCacheTimer:  clearCacheTimer,
 		lastClearCache:   time.Now(),
@@ -51,21 +51,21 @@ func (c *Cache) UpdateCache(requestValues models.RequestValues, fetchData challo
 	}
 
 	c.logger.Info("Cache is updating")
-	c.data[requestValues.Date] = cacheData{
+	c.data[requestValues.TournamentOrg][requestValues.Date] = cacheData{
 		tournamentsAndParticipants: listTournamentParticipants,
 		timeStamp:                  time.Now(),
 	}
 	return nil
 }
 
-func (c *Cache) GetData(date string, gamesList []string) []models.TournamentParticipants {
+func (c *Cache) GetData(requestValues models.RequestValues, gamesList []string) []models.TournamentParticipants {
 	c.logger.Info("Getting data from cache")
 	if len(gamesList) == 0 {
-		return c.data[date].tournamentsAndParticipants
+		return c.data[requestValues.TournamentOrg][requestValues.Date].tournamentsAndParticipants
 	}
 
 	ret := []models.TournamentParticipants{}
-	for _, tournament := range c.data[date].tournamentsAndParticipants {
+	for _, tournament := range c.data[requestValues.TournamentOrg][requestValues.Date].tournamentsAndParticipants {
 		if slices.Contains(gamesList, tournament.GameName) {
 			ret = append(ret, tournament)
 		}
@@ -73,16 +73,16 @@ func (c *Cache) GetData(date string, gamesList []string) []models.TournamentPart
 	return ret
 }
 
-func (c *Cache) ShouldUpdate(date string) bool {
-	if data, ok := c.data[date]; ok {
+func (c *Cache) ShouldUpdate(requestValues models.RequestValues) bool {
+	if data, ok := c.data[requestValues.TournamentOrg][requestValues.Date]; ok {
 		timeSince := time.Since(data.timeStamp)
 		return timeSince >= c.updateCacheTimer
 	}
 	return true
 }
 
-func (c *Cache) IsCacheEmptyAtDate(date string) bool {
-	if data, ok := c.data[date]; ok {
+func (c *Cache) IsCacheEmptyAtDate(requestValues models.RequestValues) bool {
+	if data, ok := c.data[requestValues.TournamentOrg][requestValues.Date]; ok {
 		return len(data.tournamentsAndParticipants) == 0
 	}
 	return true
@@ -94,7 +94,7 @@ func (c *Cache) ShouldClearCacheData() bool {
 }
 
 func (c *Cache) ClearCache() {
-	c.data = map[string]cacheData{}
+	c.data = map[models.TournamentOrganizer]map[string]cacheData{}
 	c.lastClearCache = time.Now()
 }
 
